@@ -70,14 +70,9 @@ class Test(BaseTest):
 
         # click maximize
         maximize_auxiliary_window()
-        if Settings.getOS() ==Platform.MAC:
-            maximize_button_assert = exists('browser_control_console_title.png', 3)
-            assert_false(self, maximize_button_assert, 'Console maximized')
 
-            close_auxiliary_window(True)
-        else:
 
-            maximize_button_assert = center_screen.exists('browser_control_console_title.png', 3)
-            assert_false(self, maximize_button_assert, 'Console maximized')
+        maximize_button_assert = center_screen.exists('browser_control_console_title.png', 3)
+        assert_false(self, maximize_button_assert, 'Console maximized')
 
-            close_auxiliary_window(False)
+        close_auxiliary_window(False)
