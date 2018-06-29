@@ -10,102 +10,68 @@ class Test(BaseTest):
 
     def __init__(self, app):
         BaseTest.__init__(self, app)
-        self.assets = os.path.join(os.path.split(__file__)[0], "assets")
         self.meta = "This is a test case that checks that Browser Control Console work as expected"
 
-        
-        # Disabling until test has been updated
-        self.exclude = Platform.ALL
 
     def run(self):
 
-        url = "about:home"
+        url = "about:blank"
+
         navigate(url)
-        pop_up_region=click_hamburger_menu_option("Web Developer")
-        pop_up_region.click("Web Console")
-        time.sleep(5)
+        time.sleep(3)
 
-        developer_menu_message='Console '
-        screen=get_screen()
-        left_corner_screen_region=Sikuli.Region(screen.getX(),screen.getH()/2,screen.getW()/2,screen.getH())
+        open_web_console()
+        time.sleep(3)
+        # get screen Region
+        screen = get_screen()
+        # from screen region create a region in the left down corner
+        left_corner_screen_region = Region(screen.getX(), screen.getH() / 2 - 100, screen.getW() / 3, screen.getH() / 2)
 
+        element_picker_assert = left_corner_screen_region.exists('browser_control_console_element_picker.png')
+        assert_true(self, element_picker_assert, 'Image is present and console is open')
 
-        if left_corner_screen_region.exists(developer_menu_message,5):
-            logger.debug('Developer Console is displayed')
+        # open a console from developer tool command line
+        console_command = 'window.alert("test alert")'
+        type(console_command,interval=0.2)
+        type(Key.ENTER)
+        # create a new region in the center of the screen
+        center_screen = Region(0, screen.getH() / 4, screen.getW(), screen.getH() / 2 - 100)
+        # verify if alert text is displayed
+        center_screen_text_assert = center_screen.exists('browser_control_console_test_alert.png')
+        assert_true(self, center_screen_text_assert, 'Alert message found')
 
-            #open a console from developer tool command line
+        # accept the alert message
+        type(Key.ENTER)
+        logger.debug('Pop up message is closed ')
+        open_browser_console()
+        logger.debug('Opening browser console with keyboard shortcut ')
+        browser_control_console_title_assert = center_screen.exists('browser_control_console_title.png')
+        assert_true(self, browser_control_console_title_assert, 'Console is opened')
 
-            console_command='window.alert("test alert")'
+        close_auxiliary_window(False)
 
-            type(console_command)
-            type(Key.ENTER)
+        close_console_assert = center_screen.exists('auxiliary_window_close_button.png', 5)
+        assert_false(self, close_console_assert, 'Console closed')
+        # open console
+        open_browser_console()
 
-            #check if one of the Developer console tabs are displayed
-            pop_up_message='test'
-            found=False
-            center_screen=Sikuli.Region(screen.getX()+100,screen.getY()+100,screen.getW(),screen.getH()/2)
-            center_screen.highlight(2)
-            if pop_up_message in center_screen.text():
-                logger.debug('Item is present: '+pop_up_message)
-                found=True
+        auxiliary_window_assert = exists('browser_control_console_title.png', 5)
+        assert_true(self, auxiliary_window_assert, 'Console was reopened')
 
-            if found:
-                logger.debug('Pop up message is displayed ')
-                type(Key.ENTER)
-                logger.debug('Pop up message is closed ')
-                open_browser_console()
-                logger.debug('Opening browser console with keyboard shortcut ')
+        minimize_button_assert = center_screen.exists('auxiliary_window_minimize.png', 3)
+        assert_true(self, minimize_button_assert, 'Minimize button exists')
+        # minimize
+        minimize_auxiliary_window(False)
+        # re-open console
+        open_browser_console()
 
-                console_items=['Net','CSS','JS','Security']
-                browser_console_items=False
-                for word in console_items:
-                    if word in center_screen.text():
-                        logger.debug('Item is present: '+word)
-                        browser_console_items=True
+        maximize_button_assert = exists('browser_control_console_title.png', 3)
+        assert_true(self, maximize_button_assert, 'Console reopened')
 
-                if browser_console_items:
-                    logger.debug('Close console')
-                    center_screen.click('auxiliary_window_close_button.png')
-                    time.sleep(1)
-                    if center_screen.exists('auxiliary_window_close_button.png', 5):
-                        logger.error('Browser Console was not closed')
-                        print "FAIL"
-                    else:
-                        logger.debug('Browser console is closed')
-                        open_browser_console()
-                        if exists('auxiliary_window_close_button.png', 5):
-                            logger.debug('Browser Console was reopened successfully')
-                            if center_screen.exists('auxiliary_window_minimize.png', 5):
-                                center_screen.click('auxiliary_window_minimize.png')
-                                logger.debug('Browser Console is minimized')
-                                open_browser_console()
-                                if center_screen.exists('auxiliary_window_maximize.png', 5):
-                                    center_screen.click('auxiliary_window_maximize.png')
-                                    logger.debug('Browser Console is maximized')
-                                    if Settings.getOS() == Platform.MAC:
-                                        screen.click('auxiliary_window_close_button.png')
-                                    else:
-                                        force_close()
-                                    print "PASS"
-                                else:
-                                    logger.error('Browser Console was not maximized')
-                            else:
-                                logger.error('Browser Console was not minimized')
-                        else:
-                            logger.error('Browser Console was not been reopened successfully')
+        # click maximize
+        maximize_auxiliary_window()
 
-            else:
-                logger.error('Developer console is not open')
-                print "Fail"
-        else:
+        maximize_button_assert = exists('browser_control_console_title.png', 3)
+        assert_false(self, maximize_button_assert, 'Console maximized')
 
-            logger.error('Developer toolbar is NOT opened ')
-            print "FAIL"
-
-
-
-
-
-
-
-
+        close_auxiliary_window(True)
