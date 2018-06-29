@@ -275,7 +275,7 @@ def minimize_auxiliary_window(is_full_screen=None):
     elif Settings.getOS() == Platform.LINUX:
         if is_full_screen:
             reset_mouse()
-            auxiliary_window_minimize = Pattern('auxiliary_window_minimize.png')
+        auxiliary_window_minimize = Pattern('auxiliary_window_minimize.png')
     elif Settings.getOS() == Platform.WINDOWS:
         auxiliary_window_minimize = Pattern('auxiliary_window_minimize.png')
 

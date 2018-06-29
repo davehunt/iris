@@ -74,5 +74,7 @@ class Test(BaseTest):
 
         maximize_button_assert = center_screen.exists('browser_control_console_title.png', 3)
         assert_false(self, maximize_button_assert, 'Console maximized')
-
-        close_auxiliary_window(False)
+        if Settings.getOS() == Platform.LINUX:
+            close_auxiliary_window(True)
+        else:
+            close_auxiliary_window(False)
