@@ -11,7 +11,7 @@ class Test(BaseTest):
     def __init__(self, app):
         BaseTest.__init__(self, app)
         self.meta = 'This is a test case that checks the zoom level on multiple tabs for multiple sites using the ' \
-                    ' \ mouse wheel.'
+                    'mouse wheel.'
 
     def run(self):
         url_1 = 'en.wikipedia.org'
@@ -33,7 +33,7 @@ class Test(BaseTest):
         # zoom in ONE time.
         zoom_with_mouse_wheel(1, ZoomType.IN)
 
-        expected = exists(search_bar_wikipedia_110_zoom_level, 10)
+        expected = exists(search_bar_wikipedia_110_zoom_level, 10, 0.94)
         assert_true(self, expected, 'Zoom level successfully increased, zoom controls found in the url bar.')
 
         new_tab()
@@ -41,7 +41,7 @@ class Test(BaseTest):
         navigate(url_1)
         time.sleep(1)
 
-        expected = exists(search_bar_wikipedia_110_zoom_level, 10)
+        expected = exists(search_bar_wikipedia_110_zoom_level, 10, 0.94)
         assert_true(self, expected, 'Zoom level still displays 110% in the new tab opened for the site for which the '
                                     'zoom level was set.')
 
