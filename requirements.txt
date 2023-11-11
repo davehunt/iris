@@ -1,0 +1,7 @@
+blinkt==0.1.2
+buttonshim==0.0.2
+pubnub==7.3.1
+ruff==0.1.5
+smbus==1.1.post2
+tomli==2.0.1
+tomli-w==1.0.0
