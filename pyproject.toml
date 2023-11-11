@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "iris"
+version = "0.1.0"
+description = ""
+authors = ["Dave Hunt <dave.hunt@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+blinkt = "^0.1.2"
+buttonshim = "^0.0.2"
+pubnub = "^7.3.1"
+smbus = "^1.1.post2"
+tomli = "^2.0.1"
+tomli-w = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
