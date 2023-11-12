@@ -63,7 +63,6 @@ except FileNotFoundError:
 
 def press_button(button):
     logging.info(f"press_button: {button}")
-    button_pressed(button, True)
 
 
 def flash(color):
