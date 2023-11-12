@@ -56,7 +56,6 @@ class PresetsManager():
 
 
 try:
-
     @buttonshim.on_press(buttonshim.BUTTON_A)
     def button_pressed(button, pressed):
         press_button(buttonshim.NAMES[button])
@@ -66,9 +65,7 @@ except FileNotFoundError:
 
 def press_button(button):
     logging.info(f"press_button: {button}")
-    logging.info(buttonshim.NAMES[buttonshim.BUTTON_A])
-    if button == buttonshim.NAMES[buttonshim.BUTTON_A]:
-        random_blink()
+    button_pressed(button, True)
 
 
 def flash(color):
