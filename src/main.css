@@ -1,0 +1,19 @@
+#advanced {
+    display: none;
+}
+
+.simulator ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.simulator li {
+    display: inline-block;
+}
+
+.simulator .pixel {
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+}

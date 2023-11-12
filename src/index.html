@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Iris</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.4.1.min.js"></script>
+    <script src="main.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+            <div class="d-flex text-dark text-decoration-none fs-4">
+                <div class="p-1"><i class="bi bi-rainbow"></i></div>
+                <div class="p-1">Iris</div>
+            </div>
+        </header>
+    </div>
+    <div class="container">
+
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="card mb-3">
+                    <div class="card-header text-bg-primary">
+                        Target
+                    </div>
+                    <div class="card-body">
+                        <select id="target" class="form-select" onchange="getRemoteState()">
+                            <option>lokipizero2w</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        Current state
+                        <button class="btn p-0 m-0" onclick="pressButton('A');">🪔</span>
+                    </div>
+                    <div id="current" class="simulator card-body">
+                        <div class="row row-cols-auto">
+                            <div class="col">
+                                <ol>
+                                    <li class="pixel" style="background-color: #000000;"></li>
+                                    <li class="pixel" style="background-color: #000000;"></li>
+                                    <li class="pixel" style="background-color: #000000;"></li>
+                                    <li class="pixel" style="background-color: #000000;"></li>
+                                    <li class="pixel" style="background-color: #000000;"></li>
+                                    <li class="pixel" style="background-color: #000000;"></li>
+                                    <li class="pixel" style="background-color: #000000;"></li>
+                                    <li class="pixel" style="background-color: #000000;"></li>
+                                </ol>
+                            </div>
+                            <div class="col">
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-outline-secondary" onclick="getRemotePixels()"><i
+                                            class="bi bi-arrow-clockwise"></i></button>
+                                    <button class="btn btn-outline-secondary" onclick="clearRemotePixels()"><i
+                                            class="bi bi-power"></i></button>
+                                    <button class="btn btn-outline-secondary" onclick="loadLocalPixels()"><i
+                                            class="bi bi-box-arrow-left"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary" onclick="pressButton('A')">A</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton('B')">B</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton('C')">C</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton('D')">D</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton('E')">E</button>
+                        </div> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+
+            <div class="col-sm-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        Pixels
+                    </div>
+                    <div id="custom" class="card-body">
+                        <div class="container">
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                                <div class="col">
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-outline-secondary" onclick="fill()"><i
+                                                class="bi bi-arrow-down-square"></i></button>
+                                        <button class="btn btn-outline-secondary" onclick="setRemotePixels()"><i
+                                                class="bi bi-send"></i></button>
+                                        <button class="btn btn-outline-secondary" onclick="savePreset()"><i
+                                                class="bi bi-floppy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        Presets
+                    </div>
+                    <div id="presets" class="card-body"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
