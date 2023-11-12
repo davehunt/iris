@@ -10,11 +10,9 @@ from pubnub.callbacks import SubscribeCallback
 from pubnub.enums import PNStatusCategory, PNReconnectionPolicy
 from pubnub.pnconfiguration import PNConfiguration
 from pubnub.pubnub import PubNub
-import tomli
-import tomli_w
 
-with open("iris.toml", mode="rb") as fp:
-    config = tomli.load(fp)
+config = configparser.ConfigParser()
+config.read("config.ini")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
 
@@ -29,12 +27,12 @@ pnconfig.reconnect_policy = PNReconnectionPolicy.EXPONENTIAL
 pubnub = PubNub(pnconfig)
 
 class PresetsManager():
-    _path = "presets.toml"
+    _path = "presets.json"
 
     def __init__(self):
-        with open(self._path, mode="rb") as fp:
-            toml = tomli.load(fp)
-        self.presets = toml["presets"] 
+        with open(self._path, mode="r") as fp:
+            _json = json.load(fp)
+        self.presets = _json["presets"] 
 
     def add(self, name, pixels):
         # TODO catch exception when preset name is not unique
@@ -51,8 +49,8 @@ class PresetsManager():
         self.save()
 
     def save(self):
-        with open(self._path, mode="wb") as fp:
-            tomli_w.dump({"presets": self.presets}, fp)
+        with open("presets.json", mode="w") as fp:
+            json.dump({"presets": self.presets}, fp, indent=4)
 
 
 try:
