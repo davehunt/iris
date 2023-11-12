@@ -78,8 +78,30 @@ def flash(color):
     blinkt.show()
 
 
+def rainbow():
+    spacing = 360.0 / 16.0
+    hue = 0
+
+    blinkt.set_brightness(0.1)
+    t_end = time.time() + 30
+    while time.time() < t_end:
+        hue = int(time.time() * 100) % 360
+        for x in range(blinkt.NUM_PIXELS):
+            offset = x * spacing
+            h = ((hue + offset) % 360) / 360.0
+            r, g, b = [int(c * 255) for c in colorsys.hsv_to_rgb(h, 1.0, 1.0)]
+            blinkt.set_pixel(x, r, g, b)
+
+        blinkt.show()
+        send_pixels("web")
+        time.sleep(0.05)
+    blinkt.clear()
+    blinkt.show()
+    send_pixels("web")
+
+
 def random_blink():
-    t_end = time.time() + 10
+    t_end = time.time() + 30
     while time.time() < t_end:
         for i in range(blinkt.NUM_PIXELS):
             blinkt.set_pixel(
