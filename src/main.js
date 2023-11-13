@@ -189,11 +189,8 @@ const deletePreset = (name) => {
 let pubnub;
 
 const setupPubNub = () => {
-    pubnub = new PubNub({
-        publishKey: "pub-c-d98680db-be18-4ee9-ba81-11117e35917d",
-        subscribeKey: "sub-c-be8e17d5-8472-4e5d-a789-5bbd006d42f3",
-        userId
-    });
+    console.log(config);
+    pubnub = new PubNub(config);
 
     // add listener
     const listener = {
