@@ -1,3 +1,4 @@
+import colorsys
 import configparser
 import json
 import logging
@@ -26,17 +27,18 @@ pnconfig.user_id = config["pubnub"]["user_id"]
 pnconfig.reconnect_policy = PNReconnectionPolicy.EXPONENTIAL
 pubnub = PubNub(pnconfig)
 
-class PresetsManager():
+
+class PresetsManager:
     _path = "presets.json"
 
     def __init__(self):
         with open(self._path, mode="r") as fp:
             _json = json.load(fp)
-        self.presets = _json["presets"] 
+        self.presets = _json["presets"]
 
     def add(self, name, pixels):
         # TODO catch exception when preset name is not unique
-        self.presets.append({ "name": name, "default": False, "pixels": pixels })
+        self.presets.append({"name": name, "default": False, "pixels": pixels})
         self.save()
 
     def rename(self, from_name, to_name):
@@ -54,22 +56,37 @@ class PresetsManager():
 
 
 try:
-    @buttonshim.on_press(buttonshim.BUTTON_A)
-    def button_pressed(button, pressed):
+
+    @buttonshim.on_press(
+        [
+            buttonshim.BUTTON_A,
+            buttonshim.BUTTON_B,
+            buttonshim.BUTTON_C,
+            buttonshim.BUTTON_D,
+            buttonshim.BUTTON_E,
+        ]
+    )
+    def handle_button_press(button, pressed):
         press_button(buttonshim.NAMES[button])
 except FileNotFoundError:
     pass
 
 
 def press_button(button):
-    logging.info(f"press_button: {button}")
+    if button == buttonshim.NAMES[buttonshim.BUTTON_E]:
+        clear()
+
+
+def clear():
+    blinkt.clear()
+    blinkt.show()
+    send_pixels("web")
 
 
 def flash(color):
     blinkt.set_pixel(0, *color)
     blinkt.show()
-    blinkt.clear()
-    blinkt.show()
+    clear()
 
 
 def rainbow():
@@ -89,9 +106,7 @@ def rainbow():
         blinkt.show()
         send_pixels("web")
         time.sleep(0.05)
-    blinkt.clear()
-    blinkt.show()
-    send_pixels("web")
+    clear()
 
 
 def random_blink():
@@ -107,9 +122,7 @@ def random_blink():
         blinkt.show()
         send_pixels("web")
         time.sleep(0.05)
-    blinkt.clear()
-    blinkt.show()
-    send_pixels("web")
+    clear()
 
 
 def publish_message(channel, message):
@@ -171,9 +184,7 @@ class MySubscribeCallback(SubscribeCallback):
             blinkt.show()
             send_pixels(sender)
         elif command == "clearPixels":
-            blinkt.clear()
-            blinkt.show()
-            send_pixels(sender)
+            clear()
         elif command == "getPixels":
             send_pixels(sender)
         elif command == "pressButton":
@@ -189,6 +200,7 @@ class MySubscribeCallback(SubscribeCallback):
         elif command == "deletePreset":
             pm.remove(message.message["name"])
             send_presets(sender)
+
 
 pm = PresetsManager()
 pubnub.add_listener(MySubscribeCallback())
