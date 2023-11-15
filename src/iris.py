@@ -73,7 +73,9 @@ except FileNotFoundError:
 
 
 def press_button(button):
-    if button == buttonshim.NAMES[buttonshim.BUTTON_E]:
+    if button == buttonshim.NAMES[buttonshim.BUTTON_A]:
+        set_pixels(random.choice(pm.presets)["pixels"])
+    elif button == buttonshim.NAMES[buttonshim.BUTTON_E]:
         clear()
 
 
@@ -139,6 +141,13 @@ def send_pixels(channel):
     publish_message(channel, {"pixels": pixels})
 
 
+def set_pixels(pixels):
+    for i, p in enumerate(pixels):
+        blinkt.set_pixel(i, *p)
+    blinkt.show()
+    send_pixels("web")
+
+
 def get_all_pixels():
     return [blinkt.get_pixel(i) for i in range(blinkt.NUM_PIXELS)]
 
@@ -179,10 +188,7 @@ class MySubscribeCallback(SubscribeCallback):
         command = message.message["command"]
         sender = message.message["from"]
         if command == "setPixels":
-            for index, pixel in enumerate(message.message["pixels"]):
-                blinkt.set_pixel(index, *pixel)
-            blinkt.show()
-            send_pixels(sender)
+            set_pixels(message.message["pixels"])
         elif command == "clearPixels":
             clear()
         elif command == "getPixels":
