@@ -18,10 +18,7 @@ config.read("config.ini")
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s:%(levelname)s:%(message)s",
-    handlers=[
-        logging.FileHandler("iris.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("iris.log"), logging.StreamHandler()],
 )
 
 blinkt.clear()
@@ -89,13 +86,15 @@ def press_button(button):
 def clear():
     blinkt.clear()
     blinkt.show()
-    send_pixels("web")
+    send_pixels()
 
 
 def flash(color):
     blinkt.set_pixel(0, *color)
     blinkt.show()
+    send_pixels()
     clear()
+    send_pixels()
 
 
 def rainbow():
@@ -113,7 +112,7 @@ def rainbow():
             blinkt.set_pixel(x, r, g, b)
 
         blinkt.show()
-        send_pixels("web")
+        send_pixels()
         time.sleep(0.05)
     clear()
 
@@ -129,30 +128,31 @@ def random_blink():
                 random.randint(0, 255),
             )
         blinkt.show()
-        send_pixels("web")
+        send_pixels()
         time.sleep(0.05)
     clear()
 
 
-def publish_message(channel, message):
+def publish_message(message, channel=None):
+    channel = channel or f"{pnconfig.user_id}_status"
     logging.info(f"publish: channel:{channel}, message:{message}")
     pubnub.publish().channel(channel).message(message).pn_async(my_publish_callback)
 
 
-def send_presets(channel):
-    publish_message(channel, {"presets": pm.presets})
+def send_presets():
+    publish_message({"presets": pm.presets})
 
 
-def send_pixels(channel):
+def send_pixels(channel=None):
     pixels = [blinkt.get_pixel(i) for i in range(blinkt.NUM_PIXELS)]
-    publish_message(channel, {"pixels": pixels})
+    publish_message({"pixels": pixels}, channel)
 
 
 def set_pixels(pixels):
     for i, p in enumerate(pixels):
         blinkt.set_pixel(i, *p)
     blinkt.show()
-    send_pixels("web")
+    send_pixels()
 
 
 def get_all_pixels():
@@ -193,28 +193,27 @@ class MySubscribeCallback(SubscribeCallback):
     def message(self, pubnub, message):
         logging.info(f"message: {message.message}")
         command = message.message["command"]
-        sender = message.message["from"]
         if command == "setPixels":
             set_pixels(message.message["pixels"])
         elif command == "clearPixels":
             clear()
         elif command == "getPixels":
-            send_pixels(sender)
+            send_pixels()
         elif command == "pressButton":
             press_button(message.message["button"])
         elif command == "getPresets":
-            send_presets(sender)
+            send_presets()
         elif command == "savePreset":
             pm.add(message.message["name"], message.message["pixels"])
-            send_presets(sender)
+            send_presets()
         elif command == "renamePreset":
             pm.rename(message.message["fromName"], message.message["toName"])
-            send_presets(sender)
+            send_presets()
         elif command == "deletePreset":
             pm.remove(message.message["name"])
-            send_presets(sender)
+            send_presets()
 
 
 pm = PresetsManager()
 pubnub.add_listener(MySubscribeCallback())
-pubnub.subscribe().channels(pnconfig.user_id).with_presence().execute()
+pubnub.subscribe().channels(f"{pnconfig.user_id}_control").with_presence().execute()

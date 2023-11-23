@@ -1,4 +1,5 @@
 const userId = "web";
+const devices = [ "lokipizero2w" ];
 
 const componentToHex = (c) => {
     hex = c.toString(16);
@@ -213,24 +214,31 @@ const setupPubNub = () => {
     };
     pubnub.addListener(listener);
 
-    // subscribe to a channel
-    pubnub.subscribe({
-        channels: [userId]
-    });
+    // subscribe to device channel(s)
+    let channels = devices.map(device => device + "_status");
+    pubnub.subscribe({ channels });
 };
+
+const setupDevices = () => {
+    let target = document.getElementById("target");
+    devices.forEach((device) => {
+        option = document.createElement('option');
+        option.innerText = device;
+        target.appendChild(option);
+    })
+}
 
 // run after page is loaded
 window.onload = (event) => {
     setupPubNub();
+    setupDevices();
     getRemoteState();
 };
 
 // publish message
 const publishMessage = async (message) => {
+    channel = document.getElementById("target").value + "_control";
     message.from = userId;
-    const publishPayload = {
-        channel: document.getElementById("target").value,
-        message: message
-    };
+    const publishPayload = { channel, message };
     await pubnub.publish(publishPayload);
 }
