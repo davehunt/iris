@@ -15,7 +15,14 @@ from pubnub.pubnub import PubNub
 config = configparser.ConfigParser()
 config.read("config.ini")
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s:%(levelname)s:%(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s:%(levelname)s:%(message)s",
+    handlers=[
+        logging.FileHandler("iris.log"),
+        logging.StreamHandler()
+    ]
+)
 
 blinkt.clear()
 blinkt.show()
