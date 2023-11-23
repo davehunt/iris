@@ -89,12 +89,30 @@ def clear():
     send_pixels()
 
 
-def flash(color):
-    blinkt.set_pixel(0, *color)
-    blinkt.show()
-    send_pixels()
+def beam(color):
+    decay_factor = 1.5
+    num_pixels = blinkt.NUM_PIXELS
+    bright_pixel = -1
+    direction = 1
+
+    for _ in range((num_pixels * 4) - 3):
+        for x in range(num_pixels):
+            pixel = blinkt.get_pixel(x)
+            blinkt.set_pixel(x, pixel[0] / decay_factor, 0, 0)
+        bright_pixel += direction
+
+        if bright_pixel >= num_pixels - 1:
+            bright_pixel = num_pixels - 1
+            direction = -abs(direction)
+        if bright_pixel <= 0:
+            bright_pixel = 0
+            direction = abs(direction)
+
+        blinkt.set_pixel(bright_pixel, *color)
+        blinkt.show()
+        send_pixels()
+        time.sleep(0.05)
     clear()
-    send_pixels()
 
 
 def rainbow():
@@ -182,13 +200,13 @@ class MySubscribeCallback(SubscribeCallback):
     def status(self, pubnub, status):
         if status.category == PNStatusCategory.PNUnexpectedDisconnectCategory:
             logging.info("Disconnected")
-            flash((0, 0, 255))
+            beam((0, 0, 255))
         elif status.category == PNStatusCategory.PNConnectedCategory:
             logging.info("Connected")
-            flash((0, 255, 0))
+            beam((0, 255, 0))
         elif status.category == PNStatusCategory.PNDecryptionErrorCategory:
             logging.info("Error")
-            flash((255, 0, 0))
+            beam((255, 0, 0))
 
     def message(self, pubnub, message):
         logging.info(f"message: {message.message}")
