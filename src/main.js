@@ -1,5 +1,5 @@
 const userId = "web";
-const devices = [ "lokipizero2w" ];
+const devices = [ "lokipizero2w", "yuzupizero2w" ];
 
 const componentToHex = (c) => {
     hex = c.toString(16);
@@ -201,11 +201,14 @@ const setupPubNub = () => {
             }
         },
         message: (messageEvent) => {
-            console.log("message: ", messageEvent.message);
-            if ("pixels" in messageEvent.message) {
-                setLocalPixels(messageEvent.message["pixels"]);
-            } else if ("presets" in messageEvent.message) {
-                setLocalPresets(messageEvent.message["presets"]);
+            let target = document.getElementById("target").value;
+            console.log("message: ", messageEvent);
+            if (messageEvent.publisher === target) {
+                if ("pixels" in messageEvent.message) {
+                    setLocalPixels(messageEvent.message["pixels"]);
+                } else if ("presets" in messageEvent.message) {
+                    setLocalPresets(messageEvent.message["presets"]);
+                }
             }
         },
         presence: (presenceEvent) => {
