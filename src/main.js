@@ -62,7 +62,7 @@ const setLocalPresets = (device, presets) => {
 
         // load preset button
         loadButton = document.createElement('button');
-        loadButton.setAttribute("class", "btn btn-outline-secondary");
+        loadButton.setAttribute("class", "btn btn-sm btn-outline-secondary");
         loadButton.setAttribute("onclick", "loadPreset(getTargetDevice(this), '" + name + "');");
         loadIcon = document.createElement("i");
         loadIcon.setAttribute("class", "bi bi-box-arrow-left");
@@ -71,7 +71,7 @@ const setLocalPresets = (device, presets) => {
 
         // send preset button
         sendButton = document.createElement('button');
-        sendButton.setAttribute("class", "btn btn-outline-secondary");
+        sendButton.setAttribute("class", "btn btn-sm btn-outline-secondary");
         sendButton.setAttribute("onclick", "loadPreset(getTargetDevice(this), '" + name + "'); setRemotePixels(getTargetDevice(this));");
         sendIcon = document.createElement("i");
         sendIcon.setAttribute("class", "bi bi-send");
@@ -81,7 +81,7 @@ const setLocalPresets = (device, presets) => {
         if (!preset["default"]) {
             // rename preset button
             renameButton = document.createElement('button');
-            renameButton.setAttribute("class", "btn btn-outline-secondary");
+            renameButton.setAttribute("class", "btn btn-sm btn-outline-secondary");
             renameButton.setAttribute("onclick", "renamePreset(getTargetDevice(this), '" + name + "');");
             renameIcon = document.createElement("i");
             renameIcon.setAttribute("class", "bi bi-pencil");
@@ -90,7 +90,7 @@ const setLocalPresets = (device, presets) => {
 
             // delete preset button
             deleteButton = document.createElement('button');
-            deleteButton.setAttribute("class", "btn btn-outline-secondary");
+            deleteButton.setAttribute("class", "btn btn-sm btn-outline-secondary");
             deleteButton.setAttribute("onclick", "deletePreset(getTargetDevice(this), '" + name + "');");
             deleteIcon = document.createElement("i");
             deleteIcon.setAttribute("class", "bi bi-trash");
