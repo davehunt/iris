@@ -1,5 +1,7 @@
 const userId = "web";
 const devices = [ "lokipizero2w", "yuzupizero2w" ];
+window.localPixels = {}
+window.localPresets = {};
 
 const componentToHex = (c) => {
     hex = c.toString(16);
@@ -19,9 +21,14 @@ const hexToRgb = (hex) => {
     ] : null;
 }
 
-const setLocalPixels = (pixels) => {
-    window.localPixels = pixels;
-    simPixels = document.querySelectorAll('#current .pixel');
+const getTargetDevice = (element) => {
+    return element.closest(".device").id;
+}
+
+const setLocalPixels = (device, pixels) => {
+    window.localPixels[device] = pixels;
+    sim = document.getElementById(device);
+    simPixels = sim.querySelectorAll('.pixel');
     for (i = 0; i < pixels.length; i++) {
         let color = pixels[i].slice(0, 3);
         simPixels[i].style["background-color"] = rgbToHex(...color);
@@ -29,9 +36,9 @@ const setLocalPixels = (pixels) => {
     }
 }
 
-const setLocalPresets = (presets) => {
-    window.localPresets = presets;
-    container = document.getElementById("presets");
+const setLocalPresets = (device, presets) => {
+    window.localPresets[device] = presets;
+    container = document.querySelector("#" + device + " .presets");
     container.innerText = "";
     presets.forEach((preset) => {
         let name = preset["name"];
@@ -56,7 +63,7 @@ const setLocalPresets = (presets) => {
         // load preset button
         loadButton = document.createElement('button');
         loadButton.setAttribute("class", "btn btn-outline-secondary");
-        loadButton.setAttribute("onclick", "loadPreset('" + name + "');");
+        loadButton.setAttribute("onclick", "loadPreset(getTargetDevice(this), '" + name + "');");
         loadIcon = document.createElement("i");
         loadIcon.setAttribute("class", "bi bi-box-arrow-left");
         loadButton.appendChild(loadIcon);
@@ -65,7 +72,7 @@ const setLocalPresets = (presets) => {
         // send preset button
         sendButton = document.createElement('button');
         sendButton.setAttribute("class", "btn btn-outline-secondary");
-        sendButton.setAttribute("onclick", "loadPreset('" + name + "'); setRemotePixels();");
+        sendButton.setAttribute("onclick", "loadPreset(getTargetDevice(this), '" + name + "'); setRemotePixels(getTargetDevice(this));");
         sendIcon = document.createElement("i");
         sendIcon.setAttribute("class", "bi bi-send");
         sendButton.appendChild(sendIcon);
@@ -75,7 +82,7 @@ const setLocalPresets = (presets) => {
             // rename preset button
             renameButton = document.createElement('button');
             renameButton.setAttribute("class", "btn btn-outline-secondary");
-            renameButton.setAttribute("onclick", "renamePreset('" + name + "');");
+            renameButton.setAttribute("onclick", "renamePreset(getTargetDevice(this), '" + name + "');");
             renameIcon = document.createElement("i");
             renameIcon.setAttribute("class", "bi bi-pencil");
             renameButton.appendChild(renameIcon);
@@ -84,7 +91,7 @@ const setLocalPresets = (presets) => {
             // delete preset button
             deleteButton = document.createElement('button');
             deleteButton.setAttribute("class", "btn btn-outline-secondary");
-            deleteButton.setAttribute("onclick", "deletePreset('" + name + "');");
+            deleteButton.setAttribute("onclick", "deletePreset(getTargetDevice(this), '" + name + "');");
             deleteIcon = document.createElement("i");
             deleteIcon.setAttribute("class", "bi bi-trash");
             deleteButton.appendChild(deleteIcon);
@@ -97,8 +104,8 @@ const setLocalPresets = (presets) => {
     })
 }
 
-const fill = () => {
-    pixels = document.querySelectorAll('#custom .pixel');
+const fill = (device) => {
+    pixels = document.querySelectorAll('#' + device + ' .custom .pixel');
     color = pixels[0].querySelector("input[name=color]").value;
     brightness = pixels[0].querySelector("input[name=brightness]").value;
     for (i = 1; i < pixels.length; i++) {
@@ -107,9 +114,9 @@ const fill = () => {
     }
 }
 
-const getLocalPixels = () => {
+const getLocalPixels = (device) => {
     let pixels = []
-    document.querySelectorAll('#custom .pixel').forEach((pixel) => {
+    document.querySelectorAll('#' + device + ' .custom .pixel').forEach((pixel) => {
         color = hexToRgb(pixel.querySelector("input[name=color]").value);
         brightness = pixel.querySelector("input[name=brightness]").value / 10;
         pixels.push([...color, brightness])
@@ -117,45 +124,47 @@ const getLocalPixels = () => {
     return pixels;
 }
 
-const getRemoteState = () => {
-    getRemotePixels();
-    getRemotePresets();
+const getRemoteState = (device) => {
+    if (device === undefined)
+        device = getTargetDevice();
+    getRemotePixels(device);
+    getRemotePresets(device);
 }
 
-const getRemotePixels = () => {
-    publishMessage({ command: "getPixels" });
+const getRemotePixels = (device) => {
+    publishMessage(device, { command: "getPixels" });
 }
 
-const getRemotePresets = () => {
-    publishMessage({ command: "getPresets" });
+const getRemotePresets = (device) => {
+    publishMessage(device, { command: "getPresets" });
 }
 
-const pressButton = (button) => {
-    publishMessage({ command: "pressButton", button });
+const pressButton = (device, button) => {
+    publishMessage(device, { command: "pressButton", button });
 };
 
-const clearRemotePixels = () => {
-    publishMessage({ command: "clearPixels" });
+const clearRemotePixels = (device) => {
+    publishMessage(device, { command: "clearPixels" });
 };
 
-const setRemotePixels = () => {
-    message = { command: "setPixels", pixels: getLocalPixels() };
-    publishMessage(message);
+const setRemotePixels = (device) => {
+    message = { command: "setPixels", pixels: getLocalPixels(device) };
+    publishMessage(device, message);
 };
 
-const loadLocalPixels = () => {
-    pixels = document.querySelectorAll('#custom .pixel');
-    for (i = 0; i < window.localPixels.length; i++) {
-        let color = window.localPixels[i].slice(0, 3);
-        let brightness = window.localPixels[i][3];
+const loadLocalPixels = (device) => {
+    let pixels = document.querySelectorAll('#' + device + ' .custom .pixel');
+    for (i = 0; i < window.localPixels[device].length; i++) {
+        let color = window.localPixels[device][i].slice(0, 3);
+        let brightness = window.localPixels[device][i][3];
         pixels[i].querySelector("input[name=color]").value = rgbToHex(...color);
         pixels[i].querySelector("input[name=brightness]").value = brightness * 10;
     }
 }
 
-const loadPreset = (presetName) => {
-    let preset = window.localPresets.find(({ name }) => name === presetName);
-    pixels = document.querySelectorAll('#custom .pixel');
+const loadPreset = (device, presetName) => {
+    let preset = window.localPresets[device].find(({ name }) => name === presetName);
+    pixels = document.getElementById(device).querySelectorAll('.custom .pixel');
     for (i = 0; i < preset["pixels"].length; i++) {
         let color = preset["pixels"][i].slice(0, 3);
         let brightness = preset["pixels"][i][3];
@@ -164,27 +173,27 @@ const loadPreset = (presetName) => {
     }
 };
 
-const savePreset = () => {
+const savePreset = (device) => {
     let name = prompt("Provide a name for the preset:");
     if (name === null || name === "")
         return;
     else {
-        let pixels = getLocalPixels();
-        publishMessage({ command: "savePreset", name, pixels });
+        let pixels = getLocalPixels(device);
+        publishMessage(device, { command: "savePreset", name, pixels });
     }
 }
 
-const renamePreset = (fromName) => {
+const renamePreset = (device, fromName) => {
     let toName = prompt("Provide a new name for the preset:", fromName);
     if (toName === null || toName === fromName)
         return;
     else
-        publishMessage({ command: "renamePreset", fromName, toName });
+        publishMessage(device, { command: "renamePreset", fromName, toName });
 }
 
-const deletePreset = (name) => {
+const deletePreset = (device, name) => {
     if (window.confirm("Are you sure you want to delete preset " + name + "?"))
-        publishMessage({ command: "deletePreset", name });
+        publishMessage(device, { command: "deletePreset", name });
 }
 
 let pubnub;
@@ -201,14 +210,11 @@ const setupPubNub = () => {
             }
         },
         message: (messageEvent) => {
-            let target = document.getElementById("target").value;
             console.log("message: ", messageEvent);
-            if (messageEvent.publisher === target) {
-                if ("pixels" in messageEvent.message) {
-                    setLocalPixels(messageEvent.message["pixels"]);
-                } else if ("presets" in messageEvent.message) {
-                    setLocalPresets(messageEvent.message["presets"]);
-                }
+            if ("pixels" in messageEvent.message) {
+                setLocalPixels(messageEvent.publisher, messageEvent.message["pixels"]);
+            } else if ("presets" in messageEvent.message) {
+                setLocalPresets(messageEvent.publisher, messageEvent.message["presets"]);
             }
         },
         presence: (presenceEvent) => {
@@ -219,29 +225,22 @@ const setupPubNub = () => {
 
     // subscribe to device channel(s)
     let channels = devices.map(device => device + "_status");
+    console.log(channels);
     pubnub.subscribe({ channels });
 };
-
-const setupDevices = () => {
-    let target = document.getElementById("target");
-    devices.forEach((device) => {
-        option = document.createElement('option');
-        option.innerText = device;
-        target.appendChild(option);
-    })
-}
 
 // run after page is loaded
 window.onload = (event) => {
     setupPubNub();
-    setupDevices();
-    getRemoteState();
+    devices.forEach((device) => {
+        getRemoteState(device);
+    })
 };
 
 // publish message
-const publishMessage = async (message) => {
-    channel = document.getElementById("target").value + "_control";
+const publishMessage = async (device, message) => {
+    let channel = device + "_control";
     message.from = userId;
-    const publishPayload = { channel, message };
-    await pubnub.publish(publishPayload);
+    console.log(message);
+    await pubnub.publish({ channel, message });
 }

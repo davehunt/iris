@@ -24,69 +24,42 @@
         </header>
     </div>
     <div class="container">
-
         <div class="row">
-            <div class="col-sm-6">
-                <div class="card mb-3">
-                    <div class="card-header text-bg-primary">
-                        Target
-                    </div>
-                    <div class="card-body">
-                        <select id="target" class="form-select" onchange="getRemoteState()"></select>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6">
+            <div id="lokipizero2w" class="device col-md-6">
                 <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        Current state
-                        <!-- <button class="btn p-0 m-0" onclick="pressButton('A');">🪔</span> -->
+                        lokipizero2w
                     </div>
-                    <div id="current" class="simulator card-body">
-                        <div class="row row-cols-auto">
-                            <div class="col">
-                                <ol>
-                                    <li class="pixel" style="background-color: #000000;"></li>
-                                    <li class="pixel" style="background-color: #000000;"></li>
-                                    <li class="pixel" style="background-color: #000000;"></li>
-                                    <li class="pixel" style="background-color: #000000;"></li>
-                                    <li class="pixel" style="background-color: #000000;"></li>
-                                    <li class="pixel" style="background-color: #000000;"></li>
-                                    <li class="pixel" style="background-color: #000000;"></li>
-                                    <li class="pixel" style="background-color: #000000;"></li>
-                                </ol>
-                            </div>
-                            <div class="col">
-                                <div class="btn-group" role="group">
-                                    <button class="btn btn-outline-secondary" onclick="getRemotePixels()"><i
-                                            class="bi bi-arrow-clockwise"></i></button>
-                                    <button class="btn btn-outline-secondary" onclick="clearRemotePixels()"><i
-                                            class="bi bi-power"></i></button>
-                                    <button class="btn btn-outline-secondary" onclick="loadLocalPixels()"><i
-                                            class="bi bi-box-arrow-left"></i></button>
-                                </div>
-                            </div>
+                    <div class="simulator card-body">
+                        <ol>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                        </ol>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'A')">A</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'B')">B</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'C')">C</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'D')">D</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'E')">E</button>
                         </div>
                         <div class="btn-group" role="group">
-                            <button class="btn btn-outline-secondary" onclick="pressButton('A')">A</button>
-                            <button class="btn btn-outline-secondary" onclick="pressButton('B')">B</button>
-                            <button class="btn btn-outline-secondary" onclick="pressButton('C')">C</button>
-                            <button class="btn btn-outline-secondary" onclick="pressButton('D')">D</button>
-                            <button class="btn btn-outline-secondary" onclick="pressButton('E')">E</button>
+                            <button class="btn btn-outline-secondary" onclick="getRemotePixels(getTargetDevice(this))"><i
+                                    class="bi bi-arrow-clockwise"></i></button>
+                            <button class="btn btn-outline-secondary" onclick="clearRemotePixels(getTargetDevice(this))"><i
+                                    class="bi bi-power"></i></button>
+                            <button class="btn btn-outline-secondary" onclick="loadLocalPixels(getTargetDevice(this))"><i
+                                    class="bi bi-box-arrow-left"></i></button>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="row">
-
-            <div class="col-sm-6">
                 <div class="card mb-3">
-                    <div class="card-header">
-                        Pixels
-                    </div>
-                    <div id="custom" class="card-body">
+                    <div class="custom card-body">
                         <div class="container">
                             <div class="row row-cols-auto pixel">
                                 <div class="col">
@@ -98,11 +71,11 @@
                                 </div>
                                 <div class="col">
                                     <div class="btn-group" role="group">
-                                        <button class="btn btn-outline-secondary" onclick="fill()"><i
+                                        <button class="btn btn-outline-secondary" onclick="fill(getTargetDevice(this))"><i
                                                 class="bi bi-arrow-down-square"></i></button>
-                                        <button class="btn btn-outline-secondary" onclick="setRemotePixels()"><i
+                                        <button class="btn btn-outline-secondary" onclick="setRemotePixels(getTargetDevice(this))"><i
                                                 class="bi bi-send"></i></button>
-                                        <button class="btn btn-outline-secondary" onclick="savePreset()"><i
+                                        <button class="btn btn-outline-secondary" onclick="savePreset(getTargetDevice(this))"><i
                                                 class="bi bi-floppy"></i>
                                         </button>
                                     </div>
@@ -174,13 +147,140 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-sm-6">
                 <div class="card mb-3">
                     <div class="card-header">
                         Presets
                     </div>
-                    <div id="presets" class="card-body"></div>
+                    <div class="presets card-body"></div>
+                </div>
+            </div>
+            <div id="yuzupizero2w" class="device col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        yuzupizero2w
+                    </div>
+                    <div class="simulator card-body">
+                        <ol>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                            <li class="pixel" style="background-color: #000000;"></li>
+                        </ol>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'A')">A</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'B')">B</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'C')">C</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'D')">D</button>
+                            <button class="btn btn-outline-secondary" onclick="pressButton(getTargetDevice(this), 'E')">E</button>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-outline-secondary" onclick="getRemotePixels(getTargetDevice(this))"><i
+                                    class="bi bi-arrow-clockwise"></i></button>
+                            <button class="btn btn-outline-secondary" onclick="clearRemotePixels(getTargetDevice(this))"><i
+                                    class="bi bi-power"></i></button>
+                            <button class="btn btn-outline-secondary" onclick="loadLocalPixels(getTargetDevice(this))"><i
+                                    class="bi bi-box-arrow-left"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="custom card-body">
+                        <div class="container">
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                                <div class="col">
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-outline-secondary" onclick="fill(getTargetDevice(this))"><i
+                                                class="bi bi-arrow-down-square"></i></button>
+                                        <button class="btn btn-outline-secondary" onclick="setRemotePixels(getTargetDevice(this))"><i
+                                                class="bi bi-send"></i></button>
+                                        <button class="btn btn-outline-secondary" onclick="savePreset(getTargetDevice(this))"><i
+                                                class="bi bi-floppy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                            <div class="row row-cols-auto pixel">
+                                <div class="col">
+                                    <input type="color" name="color" class="form-control form-control-color" />
+                                </div>
+                                <div class="col">
+                                    <input type="range" class="form-range" name="brightness" min="0" max="10"
+                                        value="1" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mb-3">
+                    <div class="card-header">
+                        Presets
+                    </div>
+                    <div class="presets card-body"></div>
                 </div>
             </div>
         </div>
