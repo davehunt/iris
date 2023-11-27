@@ -24,10 +24,13 @@ logging.basicConfig(
 blinkt.clear()
 blinkt.show()
 
+device1 = config["device1"]["name"]
+device2 = config["device2"]["name"]
+
 pnconfig = PNConfiguration()
 pnconfig.subscribe_key = config["pubnub"]["subscribe_key"]
 pnconfig.publish_key = config["pubnub"]["publish_key"]
-pnconfig.user_id = config["pubnub"]["user_id"]
+pnconfig.user_id = device1
 pnconfig.reconnect_policy = PNReconnectionPolicy.EXPONENTIAL
 pubnub = PubNub(pnconfig)
 
@@ -78,7 +81,13 @@ except FileNotFoundError:
 
 def press_button(button):
     if button == buttonshim.NAMES[buttonshim.BUTTON_A]:
+        send_pixels(f"{device2}_control")
+    elif button == buttonshim.NAMES[buttonshim.BUTTON_B]:
         set_pixels(random.choice(pm.presets)["pixels"])
+    elif button == buttonshim.NAMES[buttonshim.BUTTON_C]:
+        set_pixels(pm.presets[0]["pixels"])
+    elif button == buttonshim.NAMES[buttonshim.BUTTON_D]:
+        random_pixels()
     elif button == buttonshim.NAMES[buttonshim.BUTTON_E]:
         clear()
 
@@ -135,18 +144,22 @@ def rainbow():
     clear()
 
 
+def random_pixels():
+    for i in range(blinkt.NUM_PIXELS):
+        blinkt.set_pixel(
+            i,
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255),
+        )
+    blinkt.show()
+    send_pixels()
+
+
 def random_blink():
     t_end = time.time() + 30
     while time.time() < t_end:
-        for i in range(blinkt.NUM_PIXELS):
-            blinkt.set_pixel(
-                i,
-                random.randint(0, 255),
-                random.randint(0, 255),
-                random.randint(0, 255),
-            )
-        blinkt.show()
-        send_pixels()
+        random_pixels()
         time.sleep(0.05)
     clear()
 
@@ -163,7 +176,7 @@ def send_presets():
 
 def send_pixels(channel=None):
     pixels = [blinkt.get_pixel(i) for i in range(blinkt.NUM_PIXELS)]
-    publish_message({"pixels": pixels}, channel)
+    publish_message({"command": "setPixels", "pixels": pixels}, channel)
 
 
 def set_pixels(pixels):
