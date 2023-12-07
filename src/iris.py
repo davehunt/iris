@@ -21,6 +21,9 @@ logging.basicConfig(
     handlers=[logging.FileHandler("iris.log"), logging.StreamHandler()],
 )
 
+buttonshim.set_pixel(0, 0, 0)
+buttonshim.set_brightness(0.1)
+
 blinkt.clear()
 blinkt.show()
 
@@ -212,14 +215,18 @@ class MySubscribeCallback(SubscribeCallback):
 
     def status(self, pubnub, status):
         if status.category == PNStatusCategory.PNUnexpectedDisconnectCategory:
-            logging.info("Disconnected")
-            beam((0, 0, 255))
+            logging.warn("Disconnected")
+            buttonshim.set_pixel(255, 255, 0)
+            time.sleep(5)
+            connect()
         elif status.category == PNStatusCategory.PNConnectedCategory:
             logging.info("Connected")
-            beam((0, 255, 0))
+            buttonshim.set_pixel(0, 255, 0)
         elif status.category == PNStatusCategory.PNDecryptionErrorCategory:
-            logging.info("Error")
-            beam((255, 0, 0))
+            logging.error("Error")
+            buttonshim.set_pixel(255, 0, 0)
+            time.sleep(5)
+            connect()
 
     def message(self, pubnub, message):
         logging.info(f"message: {message.message}")
@@ -244,7 +251,9 @@ class MySubscribeCallback(SubscribeCallback):
             pm.remove(message.message["name"])
             send_presets()
 
+def connect():
+    pubnub.subscribe().channels(f"{pnconfig.user_id}_control").with_presence().execute()
 
 pm = PresetsManager()
 pubnub.add_listener(MySubscribeCallback())
-pubnub.subscribe().channels(f"{pnconfig.user_id}_control").with_presence().execute()
+connect()
