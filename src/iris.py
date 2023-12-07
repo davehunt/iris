@@ -23,6 +23,7 @@ logging.basicConfig(
 
 buttonshim.set_pixel(0, 0, 0)
 buttonshim.set_brightness(0.1)
+button_was_held = False
 
 blinkt.clear()
 blinkt.show()
@@ -65,21 +66,30 @@ class PresetsManager:
             json.dump({"presets": self.presets}, fp, indent=4)
 
 
-try:
+@buttonshim.on_press(
+    [
+        buttonshim.BUTTON_A,
+        buttonshim.BUTTON_B,
+        buttonshim.BUTTON_C,
+        buttonshim.BUTTON_D,
+        buttonshim.BUTTON_E,
+    ]
+)
+def handle_button_press(button, pressed):
+    press_button(buttonshim.NAMES[button])
 
-    @buttonshim.on_press(
-        [
-            buttonshim.BUTTON_A,
-            buttonshim.BUTTON_B,
-            buttonshim.BUTTON_C,
-            buttonshim.BUTTON_D,
-            buttonshim.BUTTON_E,
-        ]
-    )
-    def handle_button_press(button, pressed):
-        press_button(buttonshim.NAMES[button])
-except FileNotFoundError:
-    pass
+
+@buttonshim.on_release(buttonshim.BUTTON_E)
+def handle_button_release(button, pressed):
+    if not button_was_held:
+        clear()
+
+
+@buttonshim.on_hold(buttonshim.BUTTON_E, hold_time=2)
+def handle_button_hold(button):
+    global button_was_held
+    button_was_held = True
+    connect()
 
 
 def press_button(button):
@@ -92,7 +102,8 @@ def press_button(button):
     elif button == buttonshim.NAMES[buttonshim.BUTTON_D]:
         random_pixels()
     elif button == buttonshim.NAMES[buttonshim.BUTTON_E]:
-        clear()
+        global button_was_held
+        button_was_held = False
 
 
 def clear():
@@ -252,6 +263,7 @@ class MySubscribeCallback(SubscribeCallback):
             send_presets()
 
 def connect():
+    buttonshim.set_pixel(0, 0, 255)
     pubnub.subscribe().channels(f"{pnconfig.user_id}_control").with_presence().execute()
 
 pm = PresetsManager()
