@@ -233,6 +233,8 @@ class MySubscribeCallback(SubscribeCallback):
         elif status.category == PNStatusCategory.PNConnectedCategory:
             logging.info("Connected")
             buttonshim.set_pixel(0, 255, 0)
+            send_pixels()
+            send_presets()
         elif status.category == PNStatusCategory.PNDecryptionErrorCategory:
             logging.error("Error")
             buttonshim.set_pixel(255, 0, 0)
