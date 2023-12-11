@@ -265,8 +265,10 @@ class MySubscribeCallback(SubscribeCallback):
             send_presets()
 
 def connect():
-    buttonshim.set_pixel(0, 0, 255)
-    pubnub.subscribe().channels(f"{pnconfig.user_id}_control").with_presence().execute()
+    channel = f"{pnconfig.user_id}_control"
+    if channel not in pubnub.get_subscribed_channels():
+        buttonshim.set_pixel(0, 0, 255)
+        pubnub.subscribe().channels(channel).with_presence().execute()
 
 pm = PresetsManager()
 pubnub.add_listener(MySubscribeCallback())
