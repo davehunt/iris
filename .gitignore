@@ -1,5 +1,5 @@
 venv
 src/config.js
 config.ini
-iris.log
+iris.log*
 start.sh
