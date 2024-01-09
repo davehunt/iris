@@ -64,6 +64,9 @@ const setLocalPresets = (device, presets) => {
         loadButton = document.createElement('button');
         loadButton.setAttribute("class", "btn btn-sm btn-outline-secondary");
         loadButton.setAttribute("onclick", "loadPreset(getTargetDevice(this), '" + name + "');");
+        loadButton.setAttribute("data-bs-toggle", "tooltip");
+        loadButton.setAttribute("data-bs-placement", "bottom");
+        loadButton.setAttribute("title", "Load preset");
         loadIcon = document.createElement("i");
         loadIcon.setAttribute("class", "bi bi-box-arrow-left");
         loadButton.appendChild(loadIcon);
@@ -73,6 +76,9 @@ const setLocalPresets = (device, presets) => {
         sendButton = document.createElement('button');
         sendButton.setAttribute("class", "btn btn-sm btn-outline-secondary");
         sendButton.setAttribute("onclick", "loadPreset(getTargetDevice(this), '" + name + "'); setRemotePixels(getTargetDevice(this));");
+        sendButton.setAttribute("data-bs-toggle", "tooltip");
+        sendButton.setAttribute("data-bs-placement", "bottom");
+        sendButton.setAttribute("title", "Send preset");
         sendIcon = document.createElement("i");
         sendIcon.setAttribute("class", "bi bi-send");
         sendButton.appendChild(sendIcon);
@@ -83,6 +89,9 @@ const setLocalPresets = (device, presets) => {
             renameButton = document.createElement('button');
             renameButton.setAttribute("class", "btn btn-sm btn-outline-secondary");
             renameButton.setAttribute("onclick", "renamePreset(getTargetDevice(this), '" + name + "');");
+            renameButton.setAttribute("data-bs-toggle", "tooltip");
+            renameButton.setAttribute("data-bs-placement", "bottom");
+            renameButton.setAttribute("title", "Rename preset");
             renameIcon = document.createElement("i");
             renameIcon.setAttribute("class", "bi bi-pencil");
             renameButton.appendChild(renameIcon);
@@ -92,6 +101,9 @@ const setLocalPresets = (device, presets) => {
             deleteButton = document.createElement('button');
             deleteButton.setAttribute("class", "btn btn-sm btn-outline-secondary");
             deleteButton.setAttribute("onclick", "deletePreset(getTargetDevice(this), '" + name + "');");
+            deleteButton.setAttribute("data-bs-toggle", "tooltip");
+            deleteButton.setAttribute("data-bs-placement", "bottom");
+            deleteButton.setAttribute("title", "Delete preset");
             deleteIcon = document.createElement("i");
             deleteIcon.setAttribute("class", "bi bi-trash");
             deleteButton.appendChild(deleteIcon);
@@ -102,6 +114,8 @@ const setLocalPresets = (device, presets) => {
         div.appendChild(ol);
         container.appendChild(div);
     })
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
 
 const fill = (device) => {
