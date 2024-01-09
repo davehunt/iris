@@ -1,5 +1,3 @@
-const userId = "web";
-const devices = [ "lokipizero2w", "yuzupizero2w" ];
 window.localPixels = {}
 window.localPresets = {};
 
@@ -213,8 +211,8 @@ const deletePreset = (device, name) => {
 let pubnub;
 
 const setupPubNub = () => {
-    console.log(config);
-    pubnub = new PubNub(config);
+    console.log(config.pubnub);
+    pubnub = new PubNub(config.pubnub);
 
     // add listener
     const listener = {
@@ -238,7 +236,7 @@ const setupPubNub = () => {
     pubnub.addListener(listener);
 
     // subscribe to device channel(s)
-    let channels = devices.map(device => device + "_status");
+    let channels = config.devices.map(device => device.id + "_status");
     console.log(channels);
     pubnub.subscribe({ channels });
 };
@@ -246,15 +244,15 @@ const setupPubNub = () => {
 // run after page is loaded
 window.onload = (event) => {
     setupPubNub();
-    devices.forEach((device) => {
-        getRemoteState(device);
+    config.devices.forEach((device) => {
+        getRemoteState(device.id);
     })
 };
 
 // publish message
 const publishMessage = async (device, message) => {
     let channel = device + "_control";
-    message.from = userId;
+    message.from = config.pubnub.userId;
     console.log(message);
     await pubnub.publish({ channel, message });
 }

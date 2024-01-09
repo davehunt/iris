@@ -1,5 +1,11 @@
 var config = {
-    publishKey: "",
-    subscribeKey: "",
-    userId: "web"
+    pubnub: {
+        publishKey: "",
+        subscribeKey: "",
+        userId: "web",
+    },
+    devices: [
+        { id: "", name: "" },
+        { id: "", name: "" },
+    ]
 }
