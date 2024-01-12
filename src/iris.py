@@ -1,5 +1,6 @@
 import colorsys
 import configparser
+from itertools import cycle
 import json
 import logging
 import random
@@ -104,6 +105,12 @@ def press_button(button):
     elif button == buttonshim.NAMES[buttonshim.BUTTON_E]:
         global button_was_held
         button_was_held = False
+    elif button == "rainbow":
+        rainbow()
+    elif button == "valentines":
+        valentines()
+    elif button == "xmas":
+        xmas()
 
 
 def clear():
@@ -111,6 +118,35 @@ def clear():
     blinkt.show()
     send_pixels()
 
+
+def marquee(pattern, delay=0.1, duration=10):
+    clear()
+    pixels = [[0, 0, 0, 0]] * blinkt.NUM_PIXELS
+    start_time = time.time()
+    while time.time() - start_time < duration:
+        pixels.append(next(pattern))
+        pixels.pop(0)
+        set_pixels(pixels)
+        time.sleep(0.1)
+    clear()
+
+def valentines():
+    pattern = cycle([
+        [247, 0, 162, 0.1],
+        [247, 0, 162, 0.1],
+        [247, 0, 162, 0.5],
+        [247, 0, 162, 0.5],
+        [247, 0, 162, 0.9],
+        [247, 0, 162, 0.9],
+        [247, 0, 162, 0.5],
+        [247, 0, 162, 0.5]])
+    marquee(pattern)
+
+def xmas():
+    pattern = cycle([
+        [255, 0, 0, 0.1],
+        [255, 255, 255, 0.1]])
+    marquee(pattern, delay=0.2)
 
 def beam(color):
     decay_factor = 1.5
