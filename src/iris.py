@@ -88,10 +88,15 @@ class PresetsManager:
     ]
 
     def __init__(self):
-        with open(self._path, mode="r") as fp:
-            _json = json.load(fp)
-        self.custom = _json["presets"]
-        self.presets = self.defaults + self.custom
+        try:
+            with open(self._path, mode="r") as fp:
+                self.custom = json.load(fp)["presets"]
+        except (FileNotFoundError, KeyError, json.JSONDecodeError):
+            self.custom = []
+
+    @property
+    def presets(self):
+        return self.defaults + self.custom
 
     def add(self, name, pixels):
         # TODO catch exception when preset name is not unique
