@@ -42,29 +42,74 @@ pubnub = PubNub(pnconfig)
 
 class PresetsManager:
     _path = "presets.json"
+    defaults = [
+        {"name": "🩷", "pixels": [[247, 0, 162, 0.1]] * 8},
+        {"name": "🎉", "pixels": [[255, 0, 0, 0.1]] * 8},
+        {"name": "🙂", "pixels": [[0, 150, 14, 0.1]] * 8},
+        {
+            "name": "🫂",
+            "pixels": [
+                [4, 50, 255, 0.1],
+                [0, 150, 255, 0.3],
+                [0, 252, 255, 0.2],
+                [117, 213, 255, 0.1],
+                [117, 213, 255, 0.1],
+                [0, 252, 255, 0.2],
+                [0, 150, 255, 0.3],
+                [4, 50, 255, 0.1],
+            ],
+        },
+        {
+            "name": "🌈",
+            "pixels": [
+                [255, 0, 0, 0.1],
+                [255, 38, 0, 0.1],
+                [255, 146, 0, 0.1],
+                [254, 251, 0, 0.1],
+                [0, 249, 0, 0.1],
+                [4, 50, 255, 0.1],
+                [147, 32, 146, 0.1],
+                [255, 64, 255, 0.1],
+            ],
+        },
+        {
+            "name": "🍰",
+            "pixels": [
+                [255, 0, 0, 0.1],
+                [234, 234, 234, 0.1],
+                [247, 206, 70, 0.1],
+                [247, 206, 70, 0.1],
+                [234, 234, 234, 0.1],
+                [234, 234, 234, 0.1],
+                [247, 206, 70, 0.1],
+                [247, 206, 70, 0.1],
+            ],
+        },
+    ]
 
     def __init__(self):
         with open(self._path, mode="r") as fp:
             _json = json.load(fp)
-        self.presets = _json["presets"]
+        self.custom = _json["presets"]
+        self.presets = self.defaults + self.custom
 
     def add(self, name, pixels):
         # TODO catch exception when preset name is not unique
-        self.presets.append({"name": name, "default": False, "pixels": pixels})
+        self.custom.append({"name": name, "pixels": pixels})
         self.save()
 
     def rename(self, from_name, to_name):
-        for p in self.presets:
+        for p in self.custom:
             p.update(("name", to_name) for k, v in p.items() if v == from_name)
         self.save()
 
     def remove(self, name):
-        self.presets[:] = [p for p in self.presets if p.get("name") != name]
+        self.custom[:] = [p for p in self.custom if p.get("name") != name]
         self.save()
 
     def save(self):
         with open("presets.json", mode="w") as fp:
-            json.dump({"presets": self.presets}, fp, indent=4)
+            json.dump({"presets": self.custom}, fp, indent=4)
 
 
 @buttonshim.on_press(
@@ -130,23 +175,27 @@ def marquee(pattern, delay=0.1, duration=10):
         time.sleep(0.1)
     clear()
 
+
 def valentines():
-    pattern = cycle([
-        [247, 0, 162, 0.1],
-        [247, 0, 162, 0.1],
-        [247, 0, 162, 0.5],
-        [247, 0, 162, 0.5],
-        [247, 0, 162, 0.9],
-        [247, 0, 162, 0.9],
-        [247, 0, 162, 0.5],
-        [247, 0, 162, 0.5]])
+    pattern = cycle(
+        [
+            [247, 0, 162, 0.1],
+            [247, 0, 162, 0.1],
+            [247, 0, 162, 0.5],
+            [247, 0, 162, 0.5],
+            [247, 0, 162, 0.9],
+            [247, 0, 162, 0.9],
+            [247, 0, 162, 0.5],
+            [247, 0, 162, 0.5],
+        ]
+    )
     marquee(pattern)
 
+
 def xmas():
-    pattern = cycle([
-        [255, 0, 0, 0.1],
-        [255, 255, 255, 0.1]])
+    pattern = cycle([[255, 0, 0, 0.1], [255, 255, 255, 0.1]])
     marquee(pattern, delay=0.2)
+
 
 def beam(color):
     decay_factor = 1.5
@@ -300,11 +349,13 @@ class MySubscribeCallback(SubscribeCallback):
             pm.remove(message.message["name"])
             send_presets()
 
+
 def connect():
     channel = f"{pnconfig.user_id}_control"
     if channel not in pubnub.get_subscribed_channels():
         buttonshim.set_pixel(0, 0, 255)
         pubnub.subscribe().channels(channel).with_presence().execute()
+
 
 pm = PresetsManager()
 pubnub.add_listener(MySubscribeCallback())

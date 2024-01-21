@@ -3,3 +3,4 @@ src/config.js
 config.ini
 iris.log*
 start.sh
+presets.json
