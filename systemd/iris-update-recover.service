@@ -1,0 +1,13 @@
+[Unit]
+Description=Restore Iris after an interrupted source activation
+Before=iris.service
+ConditionPathExists=/var/lib/iris-update/config.json
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/python3 /usr/local/libexec/iris-update.py --recover-only
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

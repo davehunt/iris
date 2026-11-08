@@ -1,0 +1,11 @@
+[Unit]
+Description=Stage, validate and activate an Iris source update
+Wants=network-online.target
+After=network-online.target iris.service
+ConditionPathExists=/var/lib/iris-update/config.json
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/libexec/iris-update.py
+TimeoutStartSec=45min
+UMask=0077
