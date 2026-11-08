@@ -156,12 +156,15 @@ access requires `gpio` and `i2c` membership. Run Iris as the non-root service us
 
 ### 4. Install Iris
 
-Clone the approved revision (or copy the approved checkout) into `$HOME/iris`,
-then create a fresh virtual environment using the OS Python. Commands below
-run as the same non-root user chosen in Imager:
+Clone the `release` deployment branch (or copy an approved checkout that
+tracks `origin/release`) into `$HOME/iris`, then create a fresh virtual
+environment using the OS Python. `main` is for development; Pi installations
+should follow `release`. Commands below run as the same non-root user chosen
+in Imager:
 
 ```sh
-git clone https://github.com/davehunt/iris.git "$HOME/iris"
+git clone --branch release --single-branch \
+  https://github.com/davehunt/iris.git "$HOME/iris"
 cd "$HOME/iris"
 git rev-parse HEAD
 python3 -m venv --system-site-packages venv
@@ -270,9 +273,19 @@ device's pixels and presets, and send a preset from one device to the other.
 Only after that end-to-end test succeeds should the second Pi be rebuilt.
 Check all five buttons, the Button SHIM indicator and all eight Blinkt! LEDs,
 then reboot and confirm the service reconnects. Preserve the old card for
-rollback; power down before swapping it back. For later upgrades, stop the
-service, update to an approved source revision, reinstall requirements and
-restart the service.
+rollback; power down before swapping it back. For later updates, follow the
+[automatic update and rollback guide](docs/automatic-updates.md); it explains
+how to promote a tested revision and enable scheduled or manual updates.
+
+## Automatic updates
+
+For the Trixie Pi, follow the [automatic update setup](docs/automatic-updates.md)
+to enable a nightly systemd timer and a manual update command. Updates follow
+explicitly promoted, CI-tested commits on `release`, stage and check each
+fast-forward revision before switching, preserve configuration and presets,
+and roll back failed activations. Retention keeps the active release and two
+successful rollback copies. Only a tested revision promoted by a maintainer
+to `release` is installed on the Pi.
 
 ## Development notes
 
