@@ -187,7 +187,7 @@ const vm = require("vm");
 const published = [];
 const elements = [{ classList: { hidden: true, toggle(name, value) { this.hidden = value; } } }];
 const context = {
-  window: {},
+  window: { addEventListener() {} },
   console: { log() {} },
   document: { querySelectorAll: () => elements },
   config: {
@@ -198,6 +198,7 @@ const context = {
   elements,
 };
 vm.createContext(context);
+vm.runInContext(fs.readFileSync(require("path").join(require("path").dirname(process.argv[1]), "effects.js"), "utf8"), context);
 vm.runInContext(fs.readFileSync(process.argv[1], "utf8"), context);
 vm.runInContext("pubnub = { publish: async (m) => published.push(m) };", context);
 const result = vm.runInContext(process.argv[2], context);
@@ -254,6 +255,36 @@ process.stdout.write(JSON.stringify(result));
                 for channel in ("loki_control", "yuzu_control", "loki_control")
             ],
         )
+
+    def test_preview_frames_match_device_diwali_sequence(self):
+        # Use identical flicker/burst parameters, not different language RNGs.
+        celebration = DiwaliEffectTests(methodName="test_frames_are_bounded_and_eight_pixels")
+        celebration.setUp()
+        self.addCleanup(celebration.doCleanups)
+        effect = celebration.app["DiwaliCelebration"](seed=1)
+        times = [0, 0.1, 1.1, 3.6, 10, 16.5, 20, 23.5, 30.6, 32.5, 35.8, 58, 60]
+        script = """
+const fs = require("fs");
+const vm = require("vm");
+const parameters = JSON.parse(process.argv[2]);
+const context = {};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync(process.argv[1], "utf8"), context);
+context.parameters = parameters;
+const frames = vm.runInContext(`
+const effect = new DiwaliPreview();
+effect.flicker = parameters.flicker;
+effect.bursts = parameters.bursts;
+parameters.times.map(t => effect.frame(t));
+`, context);
+process.stdout.write(JSON.stringify(frames));
+"""
+        output = subprocess.run(
+            ["node", "-e", script, str(ROOT / "src" / "effects.js"),
+             json.dumps({"flicker": effect.flicker, "bursts": effect.bursts, "times": times})],
+            check=True, capture_output=True, text=True,
+        )
+        self.assertEqual(json.loads(output.stdout), [effect.frame(t) for t in times])
 
 
 if __name__ == "__main__":

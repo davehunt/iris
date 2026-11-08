@@ -1,6 +1,152 @@
 window.localPixels = {}
 window.localPresets = {};
 
+const activePreviews = new Map();
+
+const presetName = (name) => {
+    const builtIns = {
+        "🩷": "Love", "🎉": "Party", "🙂": "Happy",
+        "🫂": "Hug", "🌈": "Rainbow", "🍰": "Cake",
+    };
+    return builtIns[name] || name;
+};
+
+const createPresetLabel = (name, emoji) => {
+    const label = document.createElement("span");
+    const glyph = name.match(/\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*/u);
+    label.textContent = emoji || (glyph ? glyph[0] : "🔖");
+    label.setAttribute("class", "preset-label");
+    label.setAttribute("title", presetName(name));
+    label.setAttribute("aria-label", presetName(name));
+    label.setAttribute("tabindex", "0");
+    label.setAttribute("data-bs-toggle", "tooltip");
+    label.setAttribute("data-bs-placement", "top");
+    return label;
+};
+
+const setPreviewButton = (button, playing) => {
+    const label = playing ? "Stop preview" : "Preview";
+    button.setAttribute("aria-label", label);
+    button.setAttribute("title", label);
+    button.querySelector("i").setAttribute("class",
+        playing ? "bi bi-stop-fill" : "bi bi-play-fill");
+    const tooltip = bootstrap.Tooltip.getInstance?.(button);
+    tooltip?.setContent({ ".tooltip-inner": label });
+};
+
+const renderPixel = (element, pixel) => {
+    // Strong colour plus a variable halo suggests emitted light on a screen.
+    const brightness = clamp(pixel[3]);
+    const off = brightness === 0 || pixel.slice(0, 3).every(channel => channel === 0);
+    const intensity = Math.sqrt(brightness);
+    const colour = pixel.slice(0, 3).join(", ");
+    const outline = "inset 0 0 0 1px rgba(0, 0, 0, 0.12)";
+    element.style.backgroundColor = off ? "transparent"
+        : `rgba(${colour}, ${0.65 + 0.35 * intensity})`;
+    element.style.boxShadow = off || brightness <= 0.1 ? outline
+        : `${outline}, 0 0 ${2 + 8 * intensity}px ${2 * intensity}px rgba(${colour}, ${0.2 + 0.5 * intensity})`;
+};
+
+const paintPreview = (row, pixels) => {
+    row.querySelectorAll(".pixel").forEach((element, i) => {
+        renderPixel(element, pixels[i]);
+    });
+};
+
+const stopPreview = (device) => {
+    const preview = activePreviews.get(device);
+    if (!preview)
+        return;
+    clearTimeout(preview.timer);
+    activePreviews.delete(device);
+    setPreviewButton(preview.button, false);
+    preview.button.setAttribute("aria-pressed", "false");
+    preview.status.textContent = "Preview stopped. Browser only.";
+    paintPreview(preview.row, preview.idleFrame);
+};
+
+const togglePreview = (device, effect, row, button, status) => {
+    const current = activePreviews.get(device);
+    const wasPlaying = current && current.row === row;
+    stopPreview(device);
+    if (wasPlaying)
+        return;
+    const frame = effect.create(Date.now() / 1000);
+    const start = performance.now();
+    const preview = { row, button, status, idleFrame: frame(effect.duration) };
+    activePreviews.set(device, preview);
+    setPreviewButton(button, true);
+    button.setAttribute("aria-pressed", "true");
+    status.textContent = `Previewing ${effect.duration}s. Browser only.`;
+    const tick = () => {
+        const elapsed = (performance.now() - start) / 1000;
+        if (elapsed >= effect.duration) {
+            stopPreview(device);
+            paintPreview(row, effect.staysLit ? frame(effect.duration) : Array.from(
+                { length: 8 }, () => [0, 0, 0, 0]));
+            status.textContent = "Preview finished. Browser only.";
+            return;
+        }
+        paintPreview(row, frame(elapsed));
+        preview.timer = setTimeout(tick, 50);
+    };
+    tick();
+};
+
+const addSpecialPresets = (device, container) => {
+    SPECIAL_PRESETS.forEach(effect => {
+        const row = document.createElement("div");
+        row.setAttribute("class", "simulator special-preset");
+        const ol = document.createElement("ol");
+        ol.appendChild(createPresetLabel(effect.name, effect.emoji));
+        for (let i = 0; i < 8; i++) {
+            const pixel = document.createElement("li");
+            pixel.setAttribute("class", "pixel");
+            ol.appendChild(pixel);
+            ol.appendChild(document.createTextNode(" "));
+        }
+        row.appendChild(ol);
+        const controls = document.createElement("div");
+        controls.setAttribute("class", "btn-group");
+        controls.setAttribute("role", "group");
+        controls.setAttribute("aria-label", effect.name + " controls");
+        const status = document.createElement("small");
+        status.setAttribute("class", "visually-hidden");
+        status.setAttribute("aria-live", "polite");
+        status.textContent = `${effect.duration}s animation. Browser-only preview.`;
+        const button = (label, icon, action) => {
+            const element = document.createElement("button");
+            element.setAttribute("class", "btn btn-sm btn-outline-secondary");
+            element.setAttribute("aria-label", label);
+            element.setAttribute("title", label);
+            element.setAttribute("data-bs-toggle", "tooltip");
+            element.setAttribute("data-bs-placement", "bottom");
+            const glyph = document.createElement("i");
+            glyph.setAttribute("class", "bi bi-" + icon);
+            glyph.setAttribute("aria-hidden", "true");
+            element.appendChild(glyph);
+            element.addEventListener("click", action);
+            controls.appendChild(element);
+            return element;
+        };
+        const previewButton = button("Preview", "play-fill",
+            () => togglePreview(device, effect, row, previewButton, status));
+        previewButton.setAttribute("aria-pressed", "false");
+        button("Apply to device", "lightbulb", () => pressButton(device, effect.id));
+        const sendButton = button("Send to partner", "send", () => {
+            stopPreview(device);
+            const partner = getPartnerDevice(device);
+            if (partner)
+                pressButton(partner, effect.id);
+        });
+        sendButton.disabled = !getPartnerDevice(device);
+        ol.appendChild(controls);
+        row.appendChild(status);
+        container.appendChild(row);
+        paintPreview(row, effect.create(0)(effect.duration));
+    });
+};
+
 const componentToHex = (c) => {
     hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
@@ -25,16 +171,13 @@ const getTargetDevice = (element) => {
 
 const setLocalPixels = (device, pixels) => {
     window.localPixels[device] = pixels;
-    sim = document.getElementById(device);
-    simPixels = sim.querySelectorAll('.pixel');
-    for (i = 0; i < pixels.length; i++) {
-        let color = pixels[i].slice(0, 3);
-        simPixels[i].style["background-color"] = rgbToHex(...color);
-        // TODO need a way to represent brightness
-    }
+    const sim = document.getElementById(device);
+    const simPixels = sim.querySelectorAll('.simulator.card-body .pixel');
+    pixels.forEach((pixel, i) => renderPixel(simPixels[i], pixel));
 }
 
 const setLocalPresets = (device, presets) => {
+    stopPreview(device);
     window.localPresets[device] = presets;
     container = document.querySelector("#" + device + " .presets");
     container.innerText = "";
@@ -44,12 +187,11 @@ const setLocalPresets = (device, presets) => {
         div.setAttribute("class", "simulator");
         div.setAttribute("name", name);
         let ol = document.createElement("ol");
-        ol.appendChild(document.createTextNode(name + " "));
+        ol.appendChild(createPresetLabel(name));
         preset["pixels"].forEach((pixel) => {
-            let color = pixel.slice(0, 3)
             let li = document.createElement('li');
             li.setAttribute("class", "pixel");
-            li.setAttribute("style", "background-color: " + rgbToHex(...color) + ";");
+            renderPixel(li, pixel);
             ol.appendChild(li);
             ol.appendChild(document.createTextNode(" "));
         })
@@ -65,10 +207,27 @@ const setLocalPresets = (device, presets) => {
         loadButton.setAttribute("data-bs-toggle", "tooltip");
         loadButton.setAttribute("data-bs-placement", "bottom");
         loadButton.setAttribute("title", "Load preset");
+        loadButton.setAttribute("aria-label", "Load preset");
         loadIcon = document.createElement("i");
-        loadIcon.setAttribute("class", "bi bi-box-arrow-left");
+        loadIcon.setAttribute("class", "bi bi-pencil-square");
         loadButton.appendChild(loadIcon);
         buttonGroup.appendChild(loadButton);
+
+        const applyButton = document.createElement("button");
+        applyButton.setAttribute("class", "btn btn-sm btn-outline-secondary");
+        applyButton.setAttribute("aria-label", "Apply to device");
+        applyButton.setAttribute("title", "Apply to device");
+        applyButton.setAttribute("data-bs-toggle", "tooltip");
+        applyButton.setAttribute("data-bs-placement", "bottom");
+        applyButton.addEventListener("click", () => {
+            stopPreview(device);
+            publishMessage(device, { command: "setPixels", pixels: preset["pixels"] });
+        });
+        const applyIcon = document.createElement("i");
+        applyIcon.setAttribute("class", "bi bi-lightbulb");
+        applyIcon.setAttribute("aria-hidden", "true");
+        applyButton.appendChild(applyIcon);
+        buttonGroup.appendChild(applyButton);
 
         // send preset button
         sendButton = document.createElement('button');
@@ -77,6 +236,7 @@ const setLocalPresets = (device, presets) => {
         sendButton.setAttribute("data-bs-toggle", "tooltip");
         sendButton.setAttribute("data-bs-placement", "bottom");
         sendButton.setAttribute("title", "Send preset");
+        sendButton.setAttribute("aria-label", "Send preset");
         sendIcon = document.createElement("i");
         sendIcon.setAttribute("class", "bi bi-send");
         sendButton.appendChild(sendIcon);
@@ -90,6 +250,7 @@ const setLocalPresets = (device, presets) => {
             renameButton.setAttribute("data-bs-toggle", "tooltip");
             renameButton.setAttribute("data-bs-placement", "bottom");
             renameButton.setAttribute("title", "Rename preset");
+            renameButton.setAttribute("aria-label", "Rename preset");
             renameIcon = document.createElement("i");
             renameIcon.setAttribute("class", "bi bi-pencil");
             renameButton.appendChild(renameIcon);
@@ -102,6 +263,7 @@ const setLocalPresets = (device, presets) => {
             deleteButton.setAttribute("data-bs-toggle", "tooltip");
             deleteButton.setAttribute("data-bs-placement", "bottom");
             deleteButton.setAttribute("title", "Delete preset");
+            deleteButton.setAttribute("aria-label", "Delete preset");
             deleteIcon = document.createElement("i");
             deleteIcon.setAttribute("class", "bi bi-trash");
             deleteButton.appendChild(deleteIcon);
@@ -112,6 +274,7 @@ const setLocalPresets = (device, presets) => {
         div.appendChild(ol);
         container.appendChild(div);
     })
+    addSpecialPresets(device, container);
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
@@ -152,6 +315,7 @@ const getRemotePresets = (device) => {
 }
 
 const pressButton = (device, button) => {
+    stopPreview(device);
     publishMessage(device, { command: "pressButton", button });
 };
 
@@ -189,15 +353,18 @@ const sendDiyasToPartner = (device) => {
 };
 
 const clearRemotePixels = (device) => {
+    stopPreview(device);
     publishMessage(device, { command: "clearPixels" });
 };
 
 const setRemotePixels = (device) => {
+    stopPreview(device);
     message = { command: "setPixels", pixels: getLocalPixels(device) };
     publishMessage(device, message);
 };
 
 const loadLocalPixels = (device) => {
+    stopPreview(device);
     let pixels = document.querySelectorAll('#' + device + ' .custom .pixel');
     for (i = 0; i < window.localPixels[device].length; i++) {
         let color = window.localPixels[device][i].slice(0, 3);
@@ -208,6 +375,7 @@ const loadLocalPixels = (device) => {
 }
 
 const loadPreset = (device, presetName) => {
+    stopPreview(device);
     let preset = window.localPresets[device].find(({ name }) => name === presetName);
     pixels = document.getElementById(device).querySelectorAll('.custom .pixel');
     for (i = 0; i < preset["pixels"].length; i++) {
@@ -278,11 +446,16 @@ const setupPubNub = () => {
 window.onload = (event) => {
     setupPubNub();
     config.devices.forEach((device) => {
+        setLocalPresets(device.id, []);
         getRemoteState(device.id);
     })
     updateDiwaliSeason();
     setInterval(updateDiwaliSeason, 60 * 1000);
 };
+
+window.addEventListener("pagehide", () => {
+    [...activePreviews.keys()].forEach(stopPreview);
+});
 
 // publish message
 const publishMessage = async (device, message) => {

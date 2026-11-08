@@ -19,6 +19,43 @@ The browser UI in [`src/index.html`](src/index.html) and
 control messages to either device. The UI is static and has no application
 server.
 
+## Special presets and browser previews
+
+Presets show just their emoji, with the text name available on hover or keyboard
+focus. Built-in defaults and saved presets come from the device's reported list.
+Saved presets without an emoji get a bookmark emoji without changing their
+stored names. Animated preset controls use Bootstrap's
+play/stop (browser preview), lightbulb (apply to device), and send (partner) icons,
+with tooltips and accessible labels.
+Static presets use an edit icon to load into the custom editor and a lightbulb
+to apply directly to the device without changing the editor.
+Preview status is announced to screen readers without adding text beneath rows.
+
+Each device's presets list also includes **Rainbow**, **Valentine's**,
+**Christmas**, and **Diwali**, even before the device connects. **Preview**
+animates that row's eight LEDs in the browser only; it does not publish any
+commands, change the live device display, or overwrite custom pixels. All LED
+simulators (live devices, static preset swatches, and animated previews) use the
+same per-LED brightness rendering: off LEDs are transparent with a faint outline;
+lit LEDs retain strong RGB colour, with opacity and an outer glow increasing on
+a perceptual square-root brightness scale. LEDs at brightness 0.1 or below have
+no outer glow, keeping their edges crisp. This keeps dim LEDs colourful against
+white while the halo distinguishes their intensity. Screen colours are illustrative,
+not a calibrated
+reproduction of physical LEDs. Original RGB and brightness values are retained
+for editing and sending, without applying brightness twice. Rainbow runs for
+30 seconds, Valentine's and Christmas for 10 seconds, and Diwali for 60 seconds,
+matching the device effects. Diwali finishes on steady lamps; the other previews clear.
+
+Press **Stop preview** to end it early. Starting another preview in that device
+card, refreshing its presets, loading static pixels, or applying/sending pixels
+or effects stops its preview. The other device's preview can run independently.
+**Apply** starts the real effect on the card's device; **Send to partner** starts
+it on the other device. Both use the existing `pressButton` command. Static and
+saved presets retain their existing load/send/edit behavior and wire/storage
+format. The browser-only catalogue lives in [`src/effects.js`](src/effects.js);
+keep its frames and timing aligned with the device effects when changing them.
+
 ## Diwali celebration
 
 The Diwali celebration is a one-minute LED sequence: eight warm amber, gold
