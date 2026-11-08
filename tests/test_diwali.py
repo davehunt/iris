@@ -42,6 +42,7 @@ class DiwaliEffectTests(unittest.TestCase):
         import blinkt
         import buttonshim
 
+        blinkt.set_brightness(0)
         stack.enter_context(patch.object(configparser.ConfigParser, "read", read_config))
         stack.enter_context(
             patch.object(logging, "FileHandler", return_value=logging.NullHandler())
