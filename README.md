@@ -32,7 +32,7 @@ to apply directly to the device without changing the editor.
 Preview status is announced to screen readers without adding text beneath rows.
 
 Each device's presets list also includes **Rainbow**, **Valentine's**,
-**Christmas**, and **Diwali**, even before the device connects. **Preview**
+**Christmas**, **Diwali**, and **Firefox**, even before the device connects. **Preview**
 animates that row's eight LEDs in the browser only; it does not publish any
 commands, change the live device display, or overwrite custom pixels. All LED
 simulators (live devices, static preset swatches, and animated previews) use the
@@ -44,7 +44,8 @@ white while the halo distinguishes their intensity. Screen colours are illustrat
 not a calibrated
 reproduction of physical LEDs. Original RGB and brightness values are retained
 for editing and sending, without applying brightness twice. Rainbow runs for
-30 seconds, Valentine's and Christmas for 10 seconds, and Diwali for 60 seconds,
+30 seconds, Valentine's and Christmas for 10 seconds, Diwali for 60 seconds,
+and Firefox for 30 seconds,
 matching the device effects. Diwali finishes on steady lamps; the other previews clear.
 
 Press **Stop preview** to end it early. Starting another preview in that device
@@ -55,6 +56,23 @@ it on the other device. Both use the existing `pressButton` command. Static and
 saved presets retain their existing load/send/edit behavior and wire/storage
 format. The browser-only catalogue lives in [`src/effects.js`](src/effects.js);
 keep its frames and timing aligned with the device effects when changing them.
+
+## Firefox orbit
+
+The year-round **🦊 Firefox** special preset is an original colour and
+motion homage, not a logo reproduction. A gold head, orange sweep and soft ember
+tail flow around a deep blue/violet globe, wrapping the linear eight LEDs every
+six seconds. The 30-second animation fades in and out over 1.5 seconds and ends
+with the LEDs off. Frames update at 20 fps, with per-LED brightness below 0.3
+and no strobing.
+
+The browser preview uses the same deterministic colours, brightness and timing
+as the device. It stays browser-only; **Apply** and **Send to partner** explicitly
+publish `{"command": "pressButton", "button": "firefox"}` to the chosen device.
+Like Diwali, it runs in the interruptible background worker and publishes state
+about twice a second. Power off, pixel updates and other effect/preset buttons
+stop it; retriggering restarts it. Button A sends the current pixels to the
+partner without stopping the animation. No seasonal shortcut is added.
 
 ## Diwali celebration
 
@@ -369,3 +387,7 @@ delivery.
 The Diwali tests in [`tests/test_diwali.py`](tests/test_diwali.py) also run
 the web page's date gating and message dispatch with Node.js when `node` is on
 `PATH`; they are skipped otherwise.
+The Firefox tests in [`tests/test_firefox.py`](tests/test_firefox.py) cover frame
+bounds, smooth motion, interruption, dispatch and deterministic browser/device
+parity. The shared browser lifecycle tests cover its preview, Apply and Send
+controls alongside the other special presets.

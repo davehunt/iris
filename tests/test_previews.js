@@ -92,13 +92,13 @@ test("special list is available offline, unique on refresh, and preserves saved 
     const app = setup();
     app.run("setLocalPresets('loki', []);");
     assert.deepEqual(app.rows("loki").map(row => row.children[0].children[0].textContent.trim()),
-        ["🌈", "💝", "🎄", "🪔"]);
+        ["🌈", "💝", "🎄", "🪔", "🦊"]);
     assert.equal(app.published.length, 0);
     app.run(`setLocalPresets('loki', [
         { name: 'Rainbow', pixels: Array.from({length:8}, () => [20,40,60,0.1]), default:false }
     ]);`);
-    assert.equal(app.rows("loki").length, 4);
-    assert.equal(app.devices.loki.presets.children.length, 5);
+    assert.equal(app.rows("loki").length, 5);
+    assert.equal(app.devices.loki.presets.children.length, 6);
     assert.equal(app.run("window.localPresets.loki.length"), 1);
     assert.equal(app.run("'id' in window.localPresets.loki[0]"), false);
     const savedButtons = app.devices.loki.presets.children[0].children[0].children
@@ -153,7 +153,7 @@ test("preview replacement, remote status isolation, refresh and pagehide", () =>
 test("all effects finish at device duration; only Diwali stays lit", () => {
     const app = setup();
     app.run("setLocalPresets('loki', []);");
-    const durations = [30, 10, 10, 60];
+    const durations = [30, 10, 10, 60, 30];
     app.rows("loki").forEach((row, i) => {
         app.buttons(row)[0].click();
         app.advance(durations[i] - 0.01);
@@ -171,7 +171,7 @@ test("all effects finish at device duration; only Diwali stays lit", () => {
 test("Apply and Send to partner dispatch effect IDs, not preview frames", () => {
     const app = setup();
     app.run("setLocalPresets('loki', []);");
-    const ids = ["rainbow", "valentines", "xmas", "diwali"];
+    const ids = ["rainbow", "valentines", "xmas", "diwali", "firefox"];
     app.rows("loki").forEach((row, i) => {
         const [preview, apply, send] = app.buttons(row);
         preview.click();
@@ -213,7 +213,7 @@ test("eight-pixel marquee timing/brightness and rainbow spacing match hardware",
         JSON.stringify([[255, 0, 0, 0.1], [255, 255, 255, 0.1]]));
     assert.equal(app.run("JSON.stringify(rainbowFrame(0).slice(0,3))"),
         JSON.stringify([[255, 0, 0, 0.1], [255, 95, 0, 0.1], [255, 191, 0, 0.1]]));
-    for (const id of ["rainbow", "valentines", "xmas", "diwali"]) {
+    for (const id of ["rainbow", "valentines", "xmas", "diwali", "firefox"]) {
         assert.equal(app.run(`SPECIAL_PRESETS.find(e => e.id === '${id}').create()(5).length`), 8);
     }
 });
@@ -282,6 +282,11 @@ test("emoji-only labels keep names on hover and do not rename saved presets", ()
     assert.equal(app.run("createPresetLabel('🌙 Evening').textContent"), "🌙");
     app.run("setLocalPresets('loki', [{name:'Evening', pixels:Array.from({length:8}, () => [1,2,3,0.1])}]);");
     assert.equal(app.run("window.localPresets.loki[0].name"), "Evening");
+    const fox = app.rows("loki")[4].children[0].children[0];
+    assert.equal(fox.textContent, "🦊");
+    assert.equal(fox.attributes.title, "Firefox");
+    assert.equal(fox.attributes["aria-label"], "Firefox");
+    assert.equal(fox.attributes.tabindex, "0");
     for (const row of app.rows("loki")) {
         const buttons = app.buttons(row);
         assert.deepEqual(buttons.map(b => b.attributes["aria-label"]),
@@ -293,6 +298,27 @@ test("emoji-only labels keep names on hover and do not rename saved presets", ()
         buttons[0].click();
         assert.equal(buttons[0].querySelector("i").attributes.class, "bi bi-play-fill");
     }
+});
+
+test("Firefox previews replace, refresh and stop independently without device writes", () => {
+    const app = setup();
+    app.run("setLocalPresets('loki', []); setLocalPresets('yuzu', []);");
+    const fox = app.rows("loki")[4];
+    app.buttons(fox)[0].click();
+    app.buttons(app.rows("yuzu")[4])[0].click();
+    app.advance(6);
+    const expected = app.run("JSON.stringify(firefoxFrame(6))");
+    const pixels = JSON.parse(expected);
+    assert.deepEqual(app.colours(fox), pixels.map(([r, g, b, brightness]) =>
+        `rgba(${r}, ${g}, ${b}, ${0.65 + 0.35 * Math.sqrt(brightness)})`));
+    app.buttons(app.rows("loki")[0])[0].click();
+    assert.equal(app.buttons(fox)[0].attributes["aria-pressed"], "false");
+    assert.equal(app.timers.size, 2);
+    app.run("setLocalPresets('loki', []);");
+    assert.equal(app.timers.size, 1);
+    app.events.pagehide();
+    assert.equal(app.timers.size, 0);
+    assert.equal(app.published.length, 0);
 });
 
 test("static load and apply use distinct icons; apply sends original pixels without editing", () => {
@@ -318,10 +344,10 @@ test("static load and apply use distinct icons; apply sends original pixels with
 test("defaults come from device status rather than an offline browser catalogue", () => {
     const app = setup();
     app.run("setLocalPresets('loki', []);");
-    assert.equal(app.devices.loki.presets.children.length, 4);
+    assert.equal(app.devices.loki.presets.children.length, 5);
     assert.equal(app.run("typeof DEFAULT_PRESETS"), "undefined");
     app.run("setLocalPresets('loki', [{name:'🩷',pixels:Array.from({length:8},()=>[247,0,162,0.1]),default:true}]);");
-    assert.equal(app.devices.loki.presets.children.length, 5);
+    assert.equal(app.devices.loki.presets.children.length, 6);
     const label = app.devices.loki.presets.children[0].children[0].children[0];
     assert.equal(label.textContent, "🩷");
     assert.equal(label.attributes.title, "Love");

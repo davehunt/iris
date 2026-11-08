@@ -92,6 +92,27 @@ const rainbowFrame = (seconds) => Array.from({ length: 8 }, (_, i) => {
     return [...sectors[Math.floor(hue)].map(c => Math.floor(c * 255)), 0.1];
 });
 
+const firefoxFrame = (t) => {
+    const fade = clamp(Math.min(t, 30 - t) / 1.5);
+    const head = t * 8 / 6;
+    return Array.from({ length: 8 }, (_, i) => {
+        const globe = (1 + Math.sin(2 * Math.PI * i / 8 - t * 0.4)) / 2;
+        let pixel = mix([18, 35, 160, 0.06], [85, 24, 185, 0.08], globe);
+        // Circular lobes wrap the tail smoothly from LED 7 back to LED 0.
+        for (const [offset, width, strength, colour] of [
+            [2.5, 1.6, 0.65, [240, 48, 12, 0.18]],
+            [1.25, 0.95, 0.85, [255, 106, 16, 0.24]],
+            [0, 0.65, 1, [255, 192, 52, 0.28]],
+        ]) {
+            const angle = 2 * Math.PI * (i - head + offset) / 8;
+            const lobe = Math.exp((Math.cos(angle) - 1) / (width * 2 * Math.PI / 8) ** 2);
+            pixel = mix(pixel, colour, lobe * strength);
+        }
+        return [...pixel.slice(0, 3).map(roundChannel),
+            Math.round(clamp(pixel[3] * fade, 0, 0.3) * 1000) / 1000];
+    });
+};
+
 const SPECIAL_PRESETS = [
     { id: "rainbow", emoji: "🌈", name: "Rainbow", duration: 30,
         create: (epoch = 0) => (t) => rainbowFrame(epoch + t) },
@@ -105,4 +126,6 @@ const SPECIAL_PRESETS = [
             const celebration = new DiwaliPreview();
             return (t) => celebration.frame(t);
         } },
+    { id: "firefox", emoji: "🦊", name: "Firefox", duration: 30,
+        create: () => firefoxFrame },
 ];
