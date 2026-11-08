@@ -170,6 +170,8 @@ def press_button(button):
         xmas()
     elif button == "diwali":
         start_effect(run_diwali)
+    elif button == "firefox":
+        start_effect(run_firefox)
 
 
 effect_lock = threading.RLock()
@@ -335,21 +337,77 @@ DIWALI_FRAME_DELAY = 0.05
 DIWALI_PUBLISH_INTERVAL = 0.5
 
 
-def run_diwali(stop_event, celebration=None):
-    celebration = celebration or DiwaliCelebration()
+class FirefoxOrbit:
+    """A gold fox and flowing ember tail orbit a blue/violet globe."""
+
+    duration = 30.0
+    num_pixels = 8
+    orbit_period = 6.0
+    max_brightness = 0.3
+
+    def frame(self, t):
+        fade = _clamp(min(t, self.duration - t) / 1.5)
+        head = t * self.num_pixels / self.orbit_period
+        pixels = []
+        for i in range(self.num_pixels):
+            globe = (1 + math.sin(math.tau * i / self.num_pixels - t * 0.4)) / 2
+            pixel = _mix([18, 35, 160, 0.06], [85, 24, 185, 0.08], globe)
+            # Circular lobes wrap the tail smoothly from LED 7 back to LED 0.
+            for offset, width, strength, colour in (
+                (2.5, 1.6, 0.65, [240, 48, 12, 0.18]),
+                (1.25, 0.95, 0.85, [255, 106, 16, 0.24]),
+                (0, 0.65, 1.0, [255, 192, 52, 0.28]),
+            ):
+                angle = math.tau * (i - head + offset) / self.num_pixels
+                lobe = math.exp(
+                    (math.cos(angle) - 1) / (width * math.tau / self.num_pixels) ** 2
+                )
+                pixel = _mix(pixel, colour, lobe * strength)
+            pixels.append(
+                [round(c) for c in pixel[:3]]
+                + [round(_clamp(pixel[3] * fade, 0, self.max_brightness), 3)]
+            )
+        return pixels
+
+    def resting_frame(self):
+        return [[0, 0, 0, 0.0] for _ in range(self.num_pixels)]
+
+
+FIREFOX_FRAME_DELAY = 0.05
+FIREFOX_PUBLISH_INTERVAL = 0.5
+
+
+def run_animation(stop_event, celebration, frame_delay, publish_interval):
     start = effect_clock()
     last_publish = None
-    while (elapsed := effect_clock() - start) < celebration.duration:
+    while (
+        not stop_event.is_set()
+        and (elapsed := effect_clock() - start) < celebration.duration
+    ):
         show_frame(celebration.frame(elapsed))
         # Publishing every frame would flood PubNub; the web view samples it.
-        if last_publish is None or elapsed - last_publish >= DIWALI_PUBLISH_INTERVAL:
+        if last_publish is None or elapsed - last_publish >= publish_interval:
             send_pixels()
             last_publish = elapsed
-        if stop_event.wait(DIWALI_FRAME_DELAY):
+        if stop_event.wait(frame_delay):
             return
     if not stop_event.is_set():
         show_frame(celebration.resting_frame())
         send_pixels()
+
+
+def run_diwali(stop_event, celebration=None):
+    run_animation(
+        stop_event, celebration or DiwaliCelebration(),
+        DIWALI_FRAME_DELAY, DIWALI_PUBLISH_INTERVAL,
+    )
+
+
+def run_firefox(stop_event, orbit=None):
+    run_animation(
+        stop_event, orbit or FirefoxOrbit(),
+        FIREFOX_FRAME_DELAY, FIREFOX_PUBLISH_INTERVAL,
+    )
 
 
 def clear():
