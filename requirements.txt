@@ -1,4 +1,6 @@
+# Install python3-rpi.gpio and python3-smbus with apt, then use a
+# --system-site-packages virtual environment (see README.md).
 blinkt==0.1.2
 buttonshim==0.0.2
-pubnub==7.3.1
-smbus==1.1.post2
+pubnub==10.8.1
+packaging==26.3
