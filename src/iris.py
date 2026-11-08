@@ -3,7 +3,9 @@ import configparser
 from itertools import cycle
 import json
 import logging
+import math
 import random
+import threading
 import time
 
 import blinkt
@@ -144,6 +146,11 @@ def handle_button_hold(button):
 
 
 def press_button(button):
+    if button not in (
+        buttonshim.NAMES[buttonshim.BUTTON_A],
+        buttonshim.NAMES[buttonshim.BUTTON_E],
+    ):
+        stop_effect()
     if button == buttonshim.NAMES[buttonshim.BUTTON_A]:
         send_pixels(f"{device2}_control")
     elif button == buttonshim.NAMES[buttonshim.BUTTON_B]:
@@ -161,9 +168,192 @@ def press_button(button):
         valentines()
     elif button == "xmas":
         xmas()
+    elif button == "diwali":
+        start_effect(run_diwali)
+
+
+effect_lock = threading.RLock()
+effect_stop = threading.Event()
+effect_thread = None
+effect_clock = time.monotonic
+
+
+def start_effect(target):
+    """Run an interruptible effect in the background, replacing any current one."""
+    global effect_stop, effect_thread
+    with effect_lock:
+        stop_effect()
+        effect_stop = threading.Event()
+        effect_thread = threading.Thread(
+            target=target, args=(effect_stop,), name="iris-effect", daemon=True
+        )
+        effect_thread.start()
+
+
+def stop_effect():
+    with effect_lock:
+        thread = effect_thread
+        if thread is None or not thread.is_alive():
+            return
+        effect_stop.set()
+        if thread is not threading.current_thread():
+            thread.join(timeout=2)
+
+
+def show_frame(pixels):
+    for i, p in enumerate(pixels):
+        blinkt.set_pixel(i, *p)
+    blinkt.show()
+
+
+def _clamp(value, low=0.0, high=1.0):
+    return max(low, min(high, value))
+
+
+def _mix(a, b, amount):
+    return [a[i] + (b[i] - a[i]) * amount for i in range(4)]
+
+
+class DiwaliCelebration:
+    """Deterministic frames for the Diwali celebration.
+
+    Diyas light one by one and flicker gently, a rangoli shimmer moves outward
+    from the centre, festival sparkles burst over gold, then the diyas settle.
+    """
+
+    duration = 60.0
+    max_brightness = 0.3
+    lamp_brightness = (0.08, 0.2)
+    lamp_colours = [
+        (255, 110, 20),
+        (255, 147, 41),
+        (255, 183, 76),
+        (255, 147, 41),
+        (255, 147, 41),
+        (255, 183, 76),
+        (255, 147, 41),
+        (255, 110, 20),
+    ]
+    rangoli_colours = [(255, 0, 144), (0, 206, 190), (148, 0, 211), (255, 183, 76)]
+    sparkle_colours = [(255, 0, 144), (0, 206, 190), (148, 0, 211), (0, 230, 90)]
+    gold = (255, 183, 76)
+    light_interval = 0.5
+    light_fade = 0.4
+    rangoli = (16.0, 24.0)
+    rangoli_speed = 1.5
+    sparkles = (30.0, 36.0)
+    transition = 1.0
+    settle = 3.0
+    burst_length = 1.2
+    burst_speed = 5.0
+
+    def __init__(self, seed=None):
+        rng = random.Random(seed)
+        self.num_pixels = len(self.lamp_colours)
+        self.centre = (self.num_pixels - 1) / 2
+        self.flicker = [
+            (
+                rng.uniform(0, math.tau),
+                rng.uniform(0, math.tau),
+                rng.uniform(1.3, 2.1),
+                rng.uniform(2.9, 4.3),
+            )
+            for _ in range(self.num_pixels)
+        ]
+        start = self.sparkles[0] + 0.5
+        self.bursts = [
+            (start + k * 1.8, rng.choice(self.sparkle_colours)) for k in range(3)
+        ]
+
+    def _envelope(self, t, window):
+        start, end = window
+        if not start <= t <= end:
+            return 0.0
+        return _clamp(min(t - start, end - t) / self.transition)
+
+    def _lamp(self, i, t):
+        p1, p2, w1, w2 = self.flicker[i]
+        amplitude = _clamp((self.duration - t) / self.settle)
+        wave = 0.3 * math.sin(w1 * t + p1) + 0.2 * math.sin(w2 * t + p2)
+        level = 0.5 + wave * amplitude
+        low, high = self.lamp_brightness
+        r, g, b = self.lamp_colours[i]
+        return [r, g * (0.85 + 0.15 * level), b, low + (high - low) * level]
+
+    def _rangoli(self, i, t):
+        phase = abs(i - self.centre) - self.rangoli_speed * (t - self.rangoli[0])
+        index = math.floor(phase)
+        frac = _clamp((phase - index - 0.7) / 0.3)
+        colours = self.rangoli_colours
+        a = colours[index % len(colours)]
+        b = colours[(index + 1) % len(colours)]
+        colour = [a[c] + (b[c] - a[c]) * frac for c in range(3)]
+        return colour + [0.15 + 0.03 * math.sin(4 * t + i)]
+
+    def _sparkle(self, i, t):
+        pixel = list(self.gold) + [0.08]
+        distance = abs(i - self.centre) - 0.5
+        for start, colour in self.bursts:
+            age = t - start
+            if not 0 <= age < self.burst_length:
+                continue
+            ring = _clamp(1 - abs(distance - age * self.burst_speed))
+            fade = 1 - age / self.burst_length
+            intensity = ring * fade * _clamp(age / 0.15)
+            pixel = _mix(pixel, list(colour) + [0.28], intensity)
+        return pixel
+
+    def frame(self, t):
+        pixels = []
+        for i in range(self.num_pixels):
+            lit = _clamp((t - i * self.light_interval) / self.light_fade)
+            if lit == 0:
+                pixels.append([0, 0, 0, 0.0])
+                continue
+            pixel = self._lamp(i, t)
+            pixel[3] *= lit
+            if (amount := self._envelope(t, self.rangoli)) > 0:
+                pixel = _mix(pixel, self._rangoli(i, t), amount)
+            if (amount := self._envelope(t, self.sparkles)) > 0:
+                pixel = _mix(pixel, self._sparkle(i, t), amount)
+            r, g, b, brightness = pixel
+            pixels.append(
+                [
+                    round(r),
+                    round(g),
+                    round(b),
+                    round(_clamp(brightness, 0, self.max_brightness), 3),
+                ]
+            )
+        return pixels
+
+    def resting_frame(self):
+        return self.frame(self.duration)
+
+
+DIWALI_FRAME_DELAY = 0.05
+DIWALI_PUBLISH_INTERVAL = 0.5
+
+
+def run_diwali(stop_event, celebration=None):
+    celebration = celebration or DiwaliCelebration()
+    start = effect_clock()
+    last_publish = None
+    while (elapsed := effect_clock() - start) < celebration.duration:
+        show_frame(celebration.frame(elapsed))
+        # Publishing every frame would flood PubNub; the web view samples it.
+        if last_publish is None or elapsed - last_publish >= DIWALI_PUBLISH_INTERVAL:
+            send_pixels()
+            last_publish = elapsed
+        if stop_event.wait(DIWALI_FRAME_DELAY):
+            return
+    if not stop_event.is_set():
+        show_frame(celebration.resting_frame())
+        send_pixels()
 
 
 def clear():
+    stop_effect()
     blinkt.clear()
     blinkt.show()
     send_pixels()
@@ -335,6 +525,7 @@ class MySubscribeCallback(SubscribeCallback):
         logging.info(f"message: {message.message}")
         command = message.message["command"]
         if command == "setPixels":
+            stop_effect()
             set_pixels(message.message["pixels"])
         elif command == "clearPixels":
             clear()

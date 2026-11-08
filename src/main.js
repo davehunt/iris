@@ -155,6 +155,39 @@ const pressButton = (device, button) => {
     publishMessage(device, { command: "pressButton", button });
 };
 
+// The 2026 Diwali window from 6 to 11 November, in the browser's local time.
+// Only the shortcut is seasonal; the celebration can be triggered year-round.
+const DIWALI_SEASON = {
+    start: new Date(2026, 10, 6),
+    end: new Date(2026, 10, 12),
+};
+
+const isDiwaliSeason = (date = new Date()) => {
+    return date >= DIWALI_SEASON.start && date < DIWALI_SEASON.end;
+};
+
+const updateDiwaliSeason = (date = new Date()) => {
+    let inSeason = isDiwaliSeason(date);
+    document.querySelectorAll(".diwali-season").forEach((element) => {
+        element.classList.toggle("d-none", !inSeason);
+    });
+};
+
+const getPartnerDevice = (device) => {
+    let partner = config.devices.find(({ id }) => id !== device);
+    return partner ? partner.id : undefined;
+};
+
+const lightDiyas = (device) => {
+    pressButton(device, "diwali");
+};
+
+const sendDiyasToPartner = (device) => {
+    let partner = getPartnerDevice(device);
+    if (partner)
+        lightDiyas(partner);
+};
+
 const clearRemotePixels = (device) => {
     publishMessage(device, { command: "clearPixels" });
 };
@@ -247,6 +280,8 @@ window.onload = (event) => {
     config.devices.forEach((device) => {
         getRemoteState(device.id);
     })
+    updateDiwaliSeason();
+    setInterval(updateDiwaliSeason, 60 * 1000);
 };
 
 // publish message

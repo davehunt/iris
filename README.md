@@ -19,6 +19,33 @@ The browser UI in [`src/index.html`](src/index.html) and
 control messages to either device. The UI is static and has no application
 server.
 
+## Diwali celebration
+
+The Diwali celebration is a one-minute LED sequence: eight warm amber, gold
+and orange diyas light one by one and flicker gently and independently; a
+symmetric magenta, turquoise, violet and gold rangoli shimmer moves outward
+from the centre; a few colourful festival sparkles burst outward over gold and
+fade; then the diyas return. Most of the sequence is calm diya light, and it
+ends with the lamps left steadily lit, like a preset. Brightness stays at or
+below 0.3 and transitions are gradual, with no strobing.
+
+The celebration is available year-round from the 🪔 button in each device
+card's header. From 6 to 11 November 2026 inclusive, by the browser's local
+date, each device also shows a prominent **Light the diyas** card with a
+**Send to partner** option that starts the celebration on the other device.
+These dates apply to 2026 only; update `DIWALI_SEASON` in
+[`src/main.js`](src/main.js) for future years. The date only controls the
+shortcut: nothing starts automatically and an active effect is never replaced.
+
+Both actions publish `{"command": "pressButton", "button": "diwali"}` to the
+target device's `<device>_control` channel. The device runs the sequence in a
+background thread, so it keeps responding to commands. Power off, a pixel
+update or another effect/preset button interrupts it; pressing it again
+restarts it; the device's send-to-partner button (A) sends the current frame
+without interrupting. While running, the device publishes its LED state about
+twice a second rather than every frame. Devices without this feature ignore
+the unknown button.
+
 ## Configuration
 
 Runtime configuration is deliberately untracked:
@@ -301,3 +328,7 @@ connection callbacks and pixel messages using the real PubNub SDK and Python
 hardware drivers, with native hardware access and network requests mocked.
 Use the on-Pi verification steps above to check hardware and live PubNub
 delivery.
+
+The Diwali tests in [`tests/test_diwali.py`](tests/test_diwali.py) also run
+the web page's date gating and message dispatch with Node.js when `node` is on
+`PATH`; they are skipped otherwise.
