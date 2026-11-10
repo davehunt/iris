@@ -40,7 +40,12 @@ same per-LED brightness rendering: off LEDs are transparent with a faint outline
 lit LEDs retain strong RGB colour, with opacity and an outer glow increasing on
 a perceptual square-root brightness scale. LEDs at brightness 0.1 or below have
 no outer glow, keeping their edges crisp. This keeps dim LEDs colourful against
-white while the halo distinguishes their intensity. Screen colours are illustrative,
+white while the halo distinguishes their intensity. Lit white LEDs use an opaque
+white fill so dark backgrounds cannot turn them gray, plus a stronger outline to
+distinguish them from transparent off LEDs on light backgrounds. This includes
+the Christmas preview's white lights at brightness 0.1; their raw brightness
+and the glow threshold are unchanged.
+Screen colours are illustrative,
 not a calibrated
 reproduction of physical LEDs. Original RGB and brightness values are retained
 for editing and sending, without applying brightness twice. Rainbow runs for

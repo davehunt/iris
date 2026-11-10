@@ -40,9 +40,11 @@ const renderPixel = (element, pixel) => {
     const off = brightness === 0 || pixel.slice(0, 3).every(channel => channel === 0);
     const intensity = Math.sqrt(brightness);
     const colour = pixel.slice(0, 3).join(", ");
-    const outline = "inset 0 0 0 1px rgba(0, 0, 0, 0.12)";
+    // Keep white neutral on dark pages and distinct from off on light pages.
+    const white = !off && pixel.slice(0, 3).every(channel => channel === 255);
+    const outline = `inset 0 0 0 1px rgba(0, 0, 0, ${white ? 0.4 : 0.12})`;
     element.style.backgroundColor = off ? "transparent"
-        : `rgba(${colour}, ${0.65 + 0.35 * intensity})`;
+        : `rgba(${colour}, ${white ? 1 : 0.65 + 0.35 * intensity})`;
     element.style.boxShadow = off || brightness <= 0.1 ? outline
         : `${outline}, 0 0 ${2 + 8 * intensity}px ${2 * intensity}px rgba(${colour}, ${0.2 + 0.5 * intensity})`;
 };
