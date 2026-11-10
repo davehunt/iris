@@ -218,6 +218,62 @@ test("eight-pixel marquee timing/brightness and rainbow spacing match hardware",
     }
 });
 
+test("Christmas white LEDs stay distinct from off pixels throughout the preview", () => {
+    const app = setup();
+    app.run("setLocalPresets('loki', []);");
+    const row = app.rows("loki")[2];
+    const raw = app.run("JSON.stringify(SPECIAL_PRESETS[2].create()(0.1))");
+    assert.equal(raw, JSON.stringify([
+        ...Array.from({ length: 6 }, () => [0, 0, 0, 0]),
+        [255, 0, 0, 0.1], [255, 255, 255, 0.1],
+    ]));
+    const editor = app.run("JSON.stringify(getLocalPixels('loki'))");
+    app.buttons(row)[0].click();
+    app.advance(0.1);
+    const pixels = row.querySelectorAll(".pixel");
+    const offOutline = "inset 0 0 0 1px rgba(0, 0, 0, 0.12)";
+    const whiteOutline = "inset 0 0 0 1px rgba(0, 0, 0, 0.4)";
+    assert.ok(pixels.slice(0, 6).every(p =>
+        p.style.backgroundColor === "transparent" && p.style.boxShadow === offOutline));
+    const white = "rgba(255, 255, 255, 1)";
+    assert.equal(pixels[7].style.backgroundColor, white);
+    assert.equal(pixels[7].style.boxShadow, whiteOutline);
+    assert.equal(pixels[6].style.boxShadow, offOutline);
+    app.advance(0.6);
+    assert.deepEqual(app.colours(row),
+        Array.from({ length: 8 }, (_, i) => i % 2 ? white
+            : `rgba(255, 0, 0, ${0.65 + 0.35 * Math.sqrt(0.1)})`));
+    assert.ok(pixels.filter((_, i) => i % 2).every(p => p.style.boxShadow === whiteOutline));
+    app.advance(9.3);
+    assert.ok(pixels.every(p =>
+        p.style.backgroundColor === "transparent" && p.style.boxShadow === offOutline));
+    assert.equal(app.run("JSON.stringify(SPECIAL_PRESETS[2].create()(0.1))"), raw);
+    assert.equal(app.run("JSON.stringify(getLocalPixels('loki'))"), editor);
+    assert.equal(app.published.length, 0);
+    assert.equal(app.timers.size, 0);
+});
+
+test("opaque white and its outline are shared by live and static swatches without changing raw values", () => {
+    const app = setup();
+    const pixels = [0, 0.05, 0.1, 0.101, 0.25, 0.5, 0.75, 1]
+        .map(brightness => [255, 255, 255, brightness]);
+    app.run(`setLocalPixels('loki', ${JSON.stringify(pixels)});
+        setLocalPresets('loki', [{name:'white', pixels:${JSON.stringify(pixels)}}]);`);
+    const live = app.devices.loki.live;
+    const saved = app.devices.loki.presets.children[0].querySelectorAll(".pixel");
+    assert.deepEqual(saved.map(p => p.style), live.map(p => p.style));
+    assert.equal(live[0].style.backgroundColor, "transparent");
+    assert.equal(live[0].style.boxShadow, "inset 0 0 0 1px rgba(0, 0, 0, 0.12)");
+    for (let i = 1; i < pixels.length; i++) {
+        assert.equal(live[i].style.backgroundColor, "rgba(255, 255, 255, 1)");
+        assert.ok(live[i].style.boxShadow.startsWith("inset 0 0 0 1px rgba(0, 0, 0, 0.4)"));
+        assert.equal(live[i].style.boxShadow.includes("),"), pixels[i][3] > 0.1);
+    }
+    app.run("loadLocalPixels('loki'); setRemotePixels('loki');");
+    assert.deepEqual(Array.from(app.published[0].message.pixels, p => Array.from(p)), pixels);
+    assert.equal(app.run("JSON.stringify(window.localPixels.loki)"), JSON.stringify(pixels));
+});
+
 test("shared live, static and animated rendering represents brightness exactly once", () => {
     const app = setup();
     const pixels = [[200, 100, 50, 0], [200, 100, 50, 0.5], [200, 100, 50, 1],
@@ -254,11 +310,11 @@ test("off LEDs are transparent; low-brightness colours remain visible without da
     assert.deepEqual(app.devices.loki.live.slice(0, 2).map(p => p.style.backgroundColor),
         ["transparent", "transparent"]);
     assert.equal(app.devices.loki.live[2].style.backgroundColor,
-        `rgba(255, 255, 255, ${0.65 + 0.35 * Math.sqrt(0.1)})`);
+        "rgba(255, 255, 255, 1)");
     assert.equal(app.devices.loki.live[0].style.boxShadow,
         "inset 0 0 0 1px rgba(0, 0, 0, 0.12)");
     assert.equal(app.devices.loki.live[2].style.boxShadow,
-        "inset 0 0 0 1px rgba(0, 0, 0, 0.12)");
+        "inset 0 0 0 1px rgba(0, 0, 0, 0.4)");
     app.run("setLocalPixels('loki', Array.from({length:8},()=>[0,0,0,0]));");
     assert.ok(app.devices.loki.live.every(p => p.style.boxShadow === "inset 0 0 0 1px rgba(0, 0, 0, 0.12)"));
 });
